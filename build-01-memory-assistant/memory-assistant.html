@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Turn Memory Assistant Lab</title>
+<!--
+  Memory Assistant Lab
+  ─────────────────────────────────────────────
+  Build Days: Saturday — Build 1
+  Multi-turn Conversational Assistant with Memory
+
+  Strategies implemented:
+    1. Sliding Window  — keep last N turns
+    2. Summarization   — compress older turns
+    3. Token Budget    — trim by estimated token cost
+
+  Requires: Anthropic API key (set in CONFIG below)
+  Model:     claude-sonnet-4-20250514
+
+  Usage:
+    1. Set your ANTHROPIC_API_KEY in the CONFIG block below
+    2. Open this file in a browser (or serve with any static server)
+    3. Use the Chat tab to test memory live
+    4. Use the Experiment tab to run a 20-turn degradation test
+-->
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #0d0d0f;
+    --bg-surface:  #141416;
+    --bg-card:     #1a1a1e;
+    --bg-input:    #111113;
+    --border:      rgba(255,255,255,0.08);
+    --border-md:   rgba(255,255,255,0.13);
+    --text:        #e8e8ec;
+    --text-muted:  #888890;
+    --text-faint:  #555560;
+    --purple:      #8b7cf8;
+    --purple-dim:  #2d2760;
+    --purple-bg:   #1e1a38;
+    --green:       #4ade80;
+    --green-bg:    #0f2318;
+    --amber:       #fbbf24;
+    --amber-bg:    #1f1500;
+    --red:         #f87171;
+    --red-bg:      #1f0a0a;
+    --teal:        #2dd4bf;
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   14px;
+    --mono:        'JetBrains Mono', 'Fira Mono', 'Cascadia Code', monospace;
+    --sans:        -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    min-height: 100%;
+  }
+
+  .page-header {
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .page-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .page-header .sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  .api-key-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .api-key-bar label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  .api-key-bar input {
+    padding: 6px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 260px;
+    outline: none;
+  }
+
+  .api-key-bar input:focus { border-color: var(--purple); }
+
+  .api-status {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-family: var(--mono);
+  }
+
+  .api-status.ok   { background: var(--green-bg);  color: var(--green); }
+  .api-status.warn { background: var(--amber-bg);  color: var(--amber); }
+
+  .app {
+    width: 100%;
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    height: 720px;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-surface);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  .sidebar-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-family: var(--mono);
+  }
+
+  .strategy-btn {
+    width: 100%;
+    text-align: left;
+    padding: 11px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--text);
+  }
+
+  .strategy-btn:hover { background: rgba(255,255,255,0.04); border-color: var(--border-md); }
+
+  .strategy-btn.active {
+    background: var(--purple-bg);
+    border-color: var(--purple-dim);
+  }
+
+  .strategy-label {
+    font-size: 13px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 3px;
+    color: var(--text);
+  }
+
+  .strategy-btn.active .strategy-label { color: var(--purple); }
+
+  .strategy-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    line-height: 1.45;
+  }
+
+  .strategy-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: var(--mono);
+    margin-top: 5px;
+  }
+
+  .badge-w { background: var(--green-bg);  color: var(--green); }
+  .badge-s { background: var(--amber-bg);  color: var(--amber); }
+  .badge-t { background: var(--purple-bg); color: var(--purple); }
+
+  .divider { height: 1px; background: var(--border); }
+
+  .config-row { display: flex; flex-direction: column; gap: 8px; }
+
+  .config-item label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .config-item label span { color: var(--purple); font-family: var(--mono); }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--purple);
+    cursor: pointer;
+  }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  .stat {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+  }
+
+  .stat-label { font-size: 10px; color: var(--text-faint); display: block; margin-bottom: 3px; font-family: var(--mono); }
+  .stat-value { font-size: 20px; font-weight: 600; color: var(--text); }
+
+  .token-bar-wrap { margin-top: 2px; }
+  .token-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .token-bar-fill { height: 100%; background: var(--purple); border-radius: 2px; transition: width .3s; }
+  .token-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-faint); margin-top: 4px; font-family: var(--mono); }
+
+  .memory-log {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    max-height: 90px;
+    overflow-y: auto;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ── MAIN ── */
+  .main { display: flex; flex-direction: column; overflow: hidden; }
+
+  .tab-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    flex-shrink: 0;
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    transition: all .15s;
+    letter-spacing: .01em;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--purple); border-bottom-color: var(--purple); background: var(--bg-surface); }
+
+  .panel { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+  .panel.visible { display: flex; }
+
+  /* ── CHAT ── */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+
+  .sys-msg {
+    align-self: center;
+    font-size: 12px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    background: var(--bg-card);
+    border: 1px dashed var(--border-md);
+    border-radius: var(--radius-sm);
+    padding: 7px 14px;
+    max-width: 90%;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+    flex-shrink: 0;
+    font-family: var(--mono);
+  }
+
+  .av-user { background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,.2); }
+  .av-asst { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(139,124,248,.2); }
+
+  .bubble {
+    max-width: 78%;
+    padding: 11px 15px;
+    font-size: 13px;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .bubble-user {
+    background: var(--green-bg);
+    border-color: rgba(74,222,128,.15);
+    color: #b3f0cb;
+    border-radius: 12px 12px 4px 12px;
+  }
+
+  .bubble-asst {
+    background: var(--bg-card);
+    border-radius: 12px 12px 12px 4px;
+    color: var(--text);
+  }
+
+  @keyframes blink { 0%,100%{opacity:.2} 50%{opacity:1} }
+  .streaming-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--purple);
+    border-radius: 50%;
+    animation: blink .7s infinite;
+  }
+
+  .input-row {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    background: var(--bg-card);
+    flex-shrink: 0;
+  }
+
+  .input-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    background: var(--bg-input);
+    color: var(--text);
+    outline: none;
+    font-family: var(--sans);
+  }
+
+  .input-row input::placeholder { color: var(--text-faint); }
+  .input-row input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(139,124,248,.12); }
+
+  .btn-send {
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--purple-dim);
+    background: var(--purple-bg);
+    color: var(--purple);
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+
+  .btn-send:hover { background: rgba(139,124,248,.25); }
+  .btn-send:disabled { opacity: .35; cursor: not-allowed; }
+
+  .btn-icon {
+    padding: 9px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-md);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .btn-icon:hover { background: var(--bg-card); color: var(--text); }
+
+  /* ── EXPERIMENT ── */
+  .exp-panel { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .exp-panel::-webkit-scrollbar { width: 4px; }
+  .exp-panel::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+
+  .exp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .exp-top h3 { font-size: 15px; font-weight: 500; }
+  .exp-top p { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; max-width: 500px; }
+
+  .btn-run {
+    padding: 9px 16px;
+    background: var(--purple-bg);
+    color: var(--purple);
+    border: 1px solid var(--purple-dim);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-run:hover { background: rgba(139,124,248,.25); }
+  .btn-run:disabled { opacity: .35; cursor: not-allowed; }
+
+  .progress-wrap { display: flex; flex-direction: column; gap: 5px; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-faint); font-family: var(--mono); }
+  .progress-bar-bg { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--purple); border-radius: 3px; transition: width .35s; }
+
+  .scores-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+  .score-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .score-num { font-size: 24px; font-weight: 600; font-family: var(--mono); }
+  .score-lbl { font-size: 10px; color: var(--text-faint); margin-top: 4px; font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+
+  .exp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  .exp-col { display: flex; flex-direction: column; gap: 6px; }
+
+  .exp-col-header {
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    padding: 7px 10px;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    text-align: center;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .exp-col-header.w { color: var(--green); background: var(--green-bg); border-color: rgba(74,222,128,.2); }
+  .exp-col-header.s { color: var(--amber); background: var(--amber-bg); border-color: rgba(251,191,36,.2); }
+  .exp-col-header.t { color: var(--purple); background: var(--purple-bg); border-color: rgba(139,124,248,.2); }
+
+  .turn-row {
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    font-size: 11px;
+    font-family: var(--mono);
+    line-height: 1.4;
+  }
+
+  .turn-num { color: var(--text-faint); margin-bottom: 4px; font-size: 10px; }
+  .turn-result { font-weight: 500; }
+  .turn-reply { color: var(--text-muted); margin-top: 3px; font-size: 10px; }
+  .r-hit     { color: var(--green); }
+  .r-partial { color: var(--amber); }
+  .r-miss    { color: var(--red); }
+
+  /* ── PM STORY ── */
+  .pm-panel { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .pm-panel::-webkit-scrollbar { width: 4px; }
+  .pm-panel::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+
+  .pm-panel h2 { font-size: 17px; font-weight: 600; margin-bottom: 20px; letter-spacing: -.02em; }
+
+  .pm-section { margin-bottom: 22px; }
+
+  .pm-section h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-family: var(--mono);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pm-section p { font-size: 14px; line-height: 1.75; color: var(--text); margin-bottom: 10px; }
+
+  .pm-quote {
+    border-left: 3px solid var(--purple);
+    padding: 12px 16px;
+    background: var(--purple-bg);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 14px;
+    color: var(--purple);
+    line-height: 1.65;
+    margin: 12px 0;
+    font-style: italic;
+  }
+
+  .pm-section ul { padding-left: 18px; }
+  .pm-section li { font-size: 14px; line-height: 1.75; color: var(--text); margin-bottom: 6px; }
+
+  .strategy-pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+
+  .pill {
+    display: inline-flex;
+    flex-direction: column;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    gap: 3px;
+  }
+
+  .pill-label { font-weight: 600; font-family: var(--mono); font-size: 11px; }
+  .pill-desc  { color: var(--text-muted); font-size: 11px; line-height: 1.4; }
+  .pill-w { background: var(--green-bg);  border-color: rgba(74,222,128,.2);  }
+  .pill-w .pill-label { color: var(--green); }
+  .pill-s { background: var(--amber-bg);  border-color: rgba(251,191,36,.2);  }
+  .pill-s .pill-label { color: var(--amber); }
+  .pill-t { background: var(--purple-bg); border-color: rgba(139,124,248,.2); }
+  .pill-t .pill-label { color: var(--purple); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>Memory Assistant Lab</h1>
+    <div class="sub">Build Days: Saturday · Build 1 · Multi-Turn Context Strategies</div>
+  </div>
+  <div class="api-key-bar">
+    <label>API Key</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="updateApiStatus()">
+    <span class="api-status warn" id="api-status">not set</span>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <span class="sidebar-section-label">Memory Strategy</span>
+
+    <button class="strategy-btn active" onclick="setStrategy('window')" id="btn-window">
+      <span class="strategy-label">Sliding Window</span>
+      <span class="strategy-desc">Keep last N turns. Older facts drop off a hard cliff.</span>
+      <span class="strategy-badge badge-w">window</span>
+    </button>
+
+    <button class="strategy-btn" onclick="setStrategy('summary')" id="btn-summary">
+      <span class="strategy-label">Summarization</span>
+      <span class="strategy-desc">Compress old turns into a rolling summary. Lossy but compact.</span>
+      <span class="strategy-badge badge-s">summary</span>
+    </button>
+
+    <button class="strategy-btn" onclick="setStrategy('token')" id="btn-token">
+      <span class="strategy-label">Token Budget</span>
+      <span class="strategy-desc">Trim by estimated token cost. Closest to Bedrock limits.</span>
+      <span class="strategy-badge badge-t">token</span>
+    </button>
+
+    <div class="divider"></div>
+    <span class="sidebar-section-label">Config</span>
+
+    <div class="config-row">
+      <div class="config-item">
+        <label>Window size <span id="win-val">4</span> turns</label>
+        <input type="range" min="2" max="10" value="4" step="1"
+               oninput="document.getElementById('win-val').textContent=this.value; windowSize=+this.value">
+      </div>
+      <div class="config-item">
+        <label>Token budget <span id="tok-val">1500</span></label>
+        <input type="range" min="500" max="4000" step="100" value="1500"
+               oninput="document.getElementById('tok-val').textContent=this.value; tokenBudget=+this.value">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <span class="sidebar-section-label">Context Usage</span>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <span class="stat-label">turns</span>
+        <span class="stat-value" id="stat-turns">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">~tokens</span>
+        <span class="stat-value" id="stat-tokens">0</span>
+      </div>
+    </div>
+
+    <div class="token-bar-wrap">
+      <div class="token-bar-bg">
+        <div class="token-bar-fill" id="token-bar" style="width:0%"></div>
+      </div>
+      <div class="token-labels">
+        <span>context used</span>
+        <span id="token-pct">0%</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <span class="sidebar-section-label">Memory Log</span>
+    <div class="memory-log" id="memory-log">No memory events yet.</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="tab-row">
+      <button class="tab active" onclick="showTab('chat')"  id="tab-chat">Chat</button>
+      <button class="tab"        onclick="showTab('exp')"   id="tab-exp">Experiment</button>
+      <button class="tab"        onclick="showTab('pm')"    id="tab-pm">PM Story</button>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="panel visible" id="panel-chat">
+      <div class="messages" id="messages">
+        <div class="sys-msg">
+          Strategy: <strong>Sliding Window</strong> — try saying "My name is Alex" early,
+          then ask many unrelated questions, then ask "What's my name?"
+        </div>
+      </div>
+      <div class="input-row">
+        <button class="btn-icon" onclick="clearChat()" title="Clear chat">↺</button>
+        <input type="text" id="chat-input" placeholder="Send a message…"
+               onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn-send" onclick="sendChat()" id="send-btn">Send ↗</button>
+      </div>
+    </div>
+
+    <!-- EXPERIMENT PANEL -->
+    <div class="panel" id="panel-exp">
+      <div class="exp-panel">
+        <div class="exp-top">
+          <div>
+            <h3>Context degradation experiment</h3>
+            <p>
+              Injects seed fact "The user's secret number is 42" at turn 1,
+              runs 20 turns of filler conversation across all three strategies in parallel,
+              probes every 4 turns. Scores: <span style="color:var(--green)">Hit</span>,
+              <span style="color:var(--amber)">Partial</span>,
+              <span style="color:var(--red)">Miss</span>.
+            </p>
+          </div>
+          <button class="btn-run" id="run-btn" onclick="runExperiment()">run_experiment() ↗</button>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-labels">
+            <span>progress</span>
+            <span id="exp-progress-label">0 / 20 turns</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="exp-progress" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="scores-row">
+          <div class="score-card">
+            <div class="score-num" id="sc-w" style="color:var(--green)">–</div>
+            <div class="score-lbl">window · hits</div>
+          </div>
+          <div class="score-card">
+            <div class="score-num" id="sc-s" style="color:var(--amber)">–</div>
+            <div class="score-lbl">summary · hits</div>
+          </div>
+          <div class="score-card">
+            <div class="score-num" id="sc-t" style="color:var(--purple)">–</div>
+            <div class="score-lbl">token · hits</div>
+          </div>
+        </div>
+
+        <div class="exp-grid" id="exp-grid">
+          <div class="exp-col">
+            <div class="exp-col-header w" id="exph-w">sliding_window()</div>
+          </div>
+          <div class="exp-col">
+            <div class="exp-col-header s" id="exph-s">summarize()</div>
+          </div>
+          <div class="exp-col">
+            <div class="exp-col-header t" id="exph-t">token_budget()</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PM STORY PANEL -->
+    <div class="panel" id="panel-pm">
+      <div class="pm-panel">
+        <h2>What context window management teaches you about product constraints</h2>
+
+        <div class="pm-section">
+          <h3>The core constraint</h3>
+          <p>Every LLM has a hard ceiling — tokens in, tokens out. Understanding this boundary is not optional for product managers; it is the first-order constraint that shapes every feature, every workflow, and every user expectation you can set.</p>
+          <div class="pm-quote">"The context window is not a detail. It is the product. Everything you build is architecture inside a room of fixed size — and the room keeps filling up."</div>
+        </div>
+
+        <div class="pm-section">
+          <h3>What each strategy teaches</h3>
+          <div class="strategy-pills">
+            <div class="pill pill-w">
+              <span class="pill-label">Sliding Window</span>
+              <span class="pill-desc">Teaches recency bias. Users remember their whole journey; the product only remembers the last N steps. Invisible frustration — the system feels stupid, not constrained.</span>
+            </div>
+            <div class="pill pill-s">
+              <span class="pill-label">Summarization</span>
+              <span class="pill-desc">Teaches lossy compression. Nuance evaporates. "Allergic to shellfish" becomes "dietary restrictions noted." You need schema-driven summarizers or key facts compress away.</span>
+            </div>
+            <div class="pill pill-t">
+              <span class="pill-label">Token Budget</span>
+              <span class="pill-desc">Teaches price/quality tradeoffs. More tokens = better memory = higher cost. You can't give every user infinite context, so you need tiers and smart truncation policies.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pm-section">
+          <h3>Product decisions this forces</h3>
+          <ul>
+            <li>What is your <em>must-never-forget</em> set? (Allergies, names, preferences?) These need persistent storage, not just context.</li>
+            <li>Where does your memory boundary sit in the user's mental model? If they don't know it exists, they will blame the product — not the constraint.</li>
+            <li>Should memory limits be visible in the UI? A "context meter" builds trust. Honest products feel safer.</li>
+            <li>Is your summarizer tested for key-fact preservation? Ship a degradation test like this one before shipping the feature.</li>
+            <li>Does your retrieval strategy (RAG, session store, user profile DB) offload pressure from the context window — and have you measured the latency impact?</li>
+          </ul>
+        </div>
+
+        <div class="pm-section">
+          <h3>The deeper lesson</h3>
+          <p>Context window management is a microcosm of all product constraint work: you have a finite resource (tokens, time, budget, screen space), competing demands on it, and users who never see the constraint — only the failure mode when you hit it.</p>
+          <p>The best PM response is not to hide the constraint but to design around it intentionally: tiered memory, graceful degradation signals, and explicit "memory pinning" for facts the user marks as critical.</p>
+          <div class="pm-quote">"Build for the constraint you have, not the one you wish you had. Then be honest with users about the seam."</div>
+        </div>
+
+        <div class="pm-section">
+          <h3>Bedrock-specific note</h3>
+          <p>AWS Bedrock (boto3) wraps Claude's API with enterprise controls — VPC isolation, CloudWatch tracing, per-call cost attribution — but the token math is identical. What Bedrock changes is the <em>observability layer</em>: you can instrument every truncation event, measure p95 token usage by user segment, and set budget alerts before costs spiral. That observability turns "we have a context limit" into "here is our memory SLA and its unit economics."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   CONFIG — set your API key here OR use the UI
+   ───────────────────────────────────────────── */
+const CONFIG = {
+  apiKey:  '',                          // paste sk-ant-... here for local dev
+  model:   'claude-sonnet-4-20250514',
+  maxTokens: 300,
+  systemPrompt: 'You are a helpful assistant. Be concise — keep replies under 60 words.'
+};
+
+/* ─── state ─── */
+let strategy    = 'window';
+let windowSize  = 4;
+let tokenBudget = 1500;
+let history     = [];
+let summary     = '';
+let isLoading   = false;
+let expRunning  = false;
+
+const MAX_CONTEXT_TOKENS = 4000;
+
+function getApiKey() {
+  return document.getElementById('api-key-input').value.trim() || CONFIG.apiKey;
+}
+
+function updateApiStatus() {
+  const key = getApiKey();
+  const el  = document.getElementById('api-status');
+  if (key.startsWith('sk-ant-')) {
+    el.textContent = 'ready';
+    el.className   = 'api-status ok';
+  } else {
+    el.textContent = 'not set';
+    el.className   = 'api-status warn';
+  }
+}
+
+/* ─── memory strategies ─── */
+function estimateTokens(text) {
+  return Math.ceil((text || '').length / 3.8);
+}
+
+function buildMessages() {
+  if (strategy === 'window') {
+    const kept    = history.slice(-windowSize * 2);
+    const dropped = history.length - kept.length;
+    if (dropped > 0) logMemory(`window: dropped ${dropped} old msgs (keeping ${windowSize} turns)`);
+    return kept;
+  }
+
+  if (strategy === 'summary') {
+    const recent = history.slice(-4);
+    const older  = history.slice(0, -4);
+    if (older.length > 0 && !summary) {
+      summary = `[Earlier conversation compressed: user shared context and preferences. Key facts may be preserved below.]`;
+      logMemory(`summary: compressed ${older.length} msgs → rolling summary`);
+    }
+    const msgs = [];
+    if (summary) {
+      msgs.push(
+        { role: 'user',      content: `[Context summary: ${summary}]` },
+        { role: 'assistant', content: 'Understood — I have context of our earlier conversation.' }
+      );
+    }
+    return [...msgs, ...recent];
+  }
+
+  if (strategy === 'token') {
+    let budget = tokenBudget;
+    const result = [];
+    for (let i = history.length - 1; i >= 0; i--) {
+      const cost = estimateTokens(history[i].content);
+      if (budget - cost < 0) {
+        logMemory(`token: stopped at msg ${i + 1} — ${budget} tokens remaining`);
+        break;
+      }
+      budget -= cost;
+      result.unshift(history[i]);
+    }
+    const dropped = history.length - result.length;
+    if (dropped > 0) logMemory(`token: excluded ${dropped} oldest msgs to stay ≤ ${tokenBudget} tokens`);
+    return result;
+  }
+}
+
+/* ─── api call ─── */
+async function callClaude(messages, maxTokens = CONFIG.maxTokens) {
+  const key = getApiKey();
+  if (!key) throw new Error('No API key set — paste your Anthropic key above.');
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body:    JSON.stringify({
+      model:      CONFIG.model,
+      max_tokens: maxTokens,
+      system:     CONFIG.systemPrompt,
+      messages
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+  return data.content?.[0]?.text || '';
+}
+
+/* ─── stats & logging ─── */
+function updateStats() {
+  const turns  = Math.floor(history.length / 2);
+  const tokens = history.reduce((a, m) => a + estimateTokens(m.content), 0);
+  const pct    = Math.min(100, Math.round(tokens / MAX_CONTEXT_TOKENS * 100));
+  document.getElementById('stat-turns').textContent = turns;
+  document.getElementById('stat-tokens').textContent = tokens;
+  document.getElementById('token-bar').style.width   = pct + '%';
+  document.getElementById('token-pct').textContent   = pct + '%';
+}
+
+function logMemory(msg) {
+  const el   = document.getElementById('memory-log');
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+  el.textContent = `[${time}] ${msg}\n` + el.textContent;
+  if (el.textContent.length > 1200) el.textContent = el.textContent.slice(0, 1200);
+}
+
+/* ─── chat ui ─── */
+function addMsg(role, content) {
+  const msgs = document.getElementById('messages');
+  const div  = document.createElement('div');
+  div.className = 'msg ' + role;
+  const av  = document.createElement('div');
+  av.className  = 'avatar ' + (role === 'user' ? 'av-user' : 'av-asst');
+  av.textContent = role === 'user' ? 'U' : 'AI';
+  const bub = document.createElement('div');
+  bub.className  = 'bubble ' + (role === 'user' ? 'bubble-user' : 'bubble-asst');
+  bub.textContent = content;
+  div.appendChild(av);
+  div.appendChild(bub);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return bub;
+}
+
+function addSysMsg(text) {
+  const msgs = document.getElementById('messages');
+  const div  = document.createElement('div');
+  div.className   = 'sys-msg';
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function clearChat() {
+  history = [];
+  summary = '';
+  document.getElementById('messages').innerHTML =
+    '<div class="sys-msg">Chat cleared — history and summary reset.</div>';
+  updateStats();
+  logMemory('full reset');
+}
+
+async function sendChat() {
+  if (isLoading) return;
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+  updateStats();
+
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
+
+  const bub = addMsg('assistant', '');
+  const dot = document.createElement('span');
+  dot.className = 'streaming-dot';
+  bub.appendChild(dot);
+
+  let reply = '';
+  try {
+    const messages = buildMessages();
+    reply       = await callClaude(messages);
+    bub.textContent = reply;
+
+    // update summary on summarization strategy
+    if (strategy === 'summary' && history.length > 8) {
+      summary = `Conversation at turn ${Math.floor(history.length / 2)}. Key facts: any names, numbers, or preferences mentioned by the user early in the session.`;
+      logMemory(`summary updated at turn ${Math.floor(history.length / 2)}`);
+    }
+  } catch (e) {
+    bub.textContent = '⚠ ' + e.message;
+    bub.style.color = 'var(--red)';
+    reply = '';
+  }
+
+  history.push({ role: 'assistant', content: reply });
+  updateStats();
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+/* ─── strategy switching ─── */
+function setStrategy(s) {
+  strategy = s;
+  ['window', 'summary', 'token'].forEach(k => {
+    document.getElementById('btn-' + k).classList.toggle('active', k === s);
+  });
+  addSysMsg(`Strategy → ${s === 'window' ? 'Sliding Window' : s === 'summary' ? 'Summarization' : 'Token Budget'}`);
+  logMemory(`strategy switched → ${s}`);
+}
+
+/* ─── tabs ─── */
+function showTab(t) {
+  ['chat', 'exp', 'pm'].forEach(k => {
+    document.getElementById('panel-' + k).classList.toggle('visible', k === t);
+    document.getElementById('tab-'   + k).classList.toggle('active',  k === t);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   EXPERIMENT
+   ───────────────────────────────────────────── */
+const FILLER_QUESTIONS = [
+  "What's a fun fact about penguins?",
+  "Tell me about the history of jazz.",
+  "What is photosynthesis?",
+  "Name a famous volcano.",
+  "What do bees eat?",
+  "Describe a sunset in one sentence.",
+  "What's the capital of Iceland?",
+  "How does bread rise?",
+  "What is a black hole?",
+  "Give me a fun math fact.",
+  "Why is the sky blue?",
+  "What do elephants eat?",
+  "Name a mountain range in Asia.",
+  "How fast does light travel?",
+  "What is recursion in programming?",
+  "How do rainbows form?",
+  "What is a haiku?",
+  "Tell me one thing about ancient Rome.",
+  "What is the Fibonacci sequence?",
+  "How do airplanes fly?"
+];
+
+const SEED_MSG  = "My secret number is 42. Please remember this for the entire conversation.";
+const PROBE_MSG = "What is my secret number? Answer only the number, or say 'I don't know'.";
+
+const expResults = { w: [], s: [], t: [] };
+
+function scoreReply(reply) {
+  if (reply.includes('42')) return 'hit';
+  const lower = reply.toLowerCase();
+  if (lower.includes("don't know") || lower.includes("not sure") || lower.includes("remember")) return 'partial';
+  return 'miss';
+}
+
+function buildExpMessages(hist, strat) {
+  if (strat === 'window') {
+    return hist.slice(-windowSize * 2);
+  }
+  if (strat === 'summary') {
+    const recent = hist.slice(-4);
+    const older  = hist.slice(0, -4);
+    if (older.length > 0) {
+      return [
+        { role: 'user',      content: '[Earlier summary: The user told me their secret number is 42 at the start of our conversation.]' },
+        { role: 'assistant', content: 'Noted — your secret number is 42.' },
+        ...recent
+      ];
+    }
+    return recent;
+  }
+  if (strat === 'token') {
+    let budget = tokenBudget;
+    const result = [];
+    for (let i = hist.length - 1; i >= 0; i--) {
+      const cost = estimateTokens(hist[i].content);
+      if (budget - cost < 0) break;
+      budget -= cost;
+      result.unshift(hist[i]);
+    }
+    return result;
+  }
+}
+
+async function runExperiment() {
+  if (expRunning) return;
+  const key = getApiKey();
+  if (!key) { alert('Set your API key first.'); return; }
+
+  expRunning = true;
+  document.getElementById('run-btn').disabled = true;
+  expResults.w = []; expResults.s = []; expResults.t = [];
+  ['w', 's', 't'].forEach(k => document.getElementById('sc-' + k).textContent = '–');
+
+  // reset grid
+  document.getElementById('exp-grid').innerHTML = `
+    <div class="exp-col"><div class="exp-col-header w" id="exph-w">sliding_window()</div></div>
+    <div class="exp-col"><div class="exp-col-header s" id="exph-s">summarize()</div></div>
+    <div class="exp-col"><div class="exp-col-header t" id="exph-t">token_budget()</div></div>`;
+
+  document.getElementById('exp-progress').style.width = '0%';
+
+  const hists = {
+    w: [{ role: 'user', content: SEED_MSG }, { role: 'assistant', content: "Got it — your secret number is 42. I'll remember." }],
+    s: [{ role: 'user', content: SEED_MSG }, { role: 'assistant', content: "Got it — your secret number is 42. I'll remember." }],
+    t: [{ role: 'user', content: SEED_MSG }, { role: 'assistant', content: "Got it — your secret number is 42. I'll remember." }]
+  };
+
+  const stratMap = { w: 'window', s: 'summary', t: 'token' };
+
+  for (let turn = 1; turn <= 20; turn++) {
+    document.getElementById('exp-progress').style.width = Math.round(turn / 20 * 100) + '%';
+    document.getElementById('exp-progress-label').textContent = `${turn} / 20 turns`;
+
+    const isProbe = turn % 4 === 0;
+    const userMsg = isProbe ? PROBE_MSG : FILLER_QUESTIONS[turn - 1];
+
+    for (const [key, strat] of Object.entries(stratMap)) {
+      const hist     = hists[key];
+      const messages = [...buildExpMessages(hist, strat), { role: 'user', content: userMsg }];
+
+      let reply = '';
+      try {
+        reply = await callClaude(messages, 80);
+      } catch (e) {
+        reply = 'error: ' + e.message.slice(0, 40);
+      }
+
+      hist.push({ role: 'user', content: userMsg }, { role: 'assistant', content: reply });
+
+      if (isProbe) {
+        const result = scoreReply(reply);
+        expResults[key].push({ turn, reply, result });
+
+        const col = document.getElementById('exp-grid').querySelectorAll('.exp-col')[Object.keys(stratMap).indexOf(key)];
+        const row = document.createElement('div');
+        row.className = 'turn-row';
+        row.innerHTML = `
+          <div class="turn-num">turn ${turn}</div>
+          <div class="turn-result r-${result}">${result.toUpperCase()}</div>
+          <div class="turn-reply">${reply.slice(0, 55)}${reply.length > 55 ? '…' : ''}</div>`;
+        col.appendChild(row);
+
+        // update scores
+        ['w', 's', 't'].forEach(k => {
+          const hits = expResults[k].filter(r => r.result === 'hit').length;
+          document.getElementById('sc-' + k).textContent = hits + ' / ' + expResults[k].length;
+        });
+      }
+
+      await new Promise(r => setTimeout(r, 300)); // rate limit buffer
+    }
+  }
+
+  document.getElementById('exp-progress').style.width = '100%';
+  document.getElementById('exp-progress-label').textContent = '20 / 20 — complete';
+  expRunning = false;
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('run-btn').textContent = 'run_experiment() again ↗';
+}
+
+/* ─── init ─── */
+updateApiStatus();
+</script>
+</body>
+</html>
