@@ -2,6 +2,21 @@
 
 **Build Days: Saturday · Build 1 of 5**
 
+Based on what we built in the lab, here are the three techniques:
+
+**1. Sliding Window**
+You keep only the last N turns of conversation and drop everything older. It's the simplest approach — predictable and cheap — but it has a hard cliff. The moment a fact scrolls out of the window, the model has no memory of it at all. Good for short, task-focused sessions where early context doesn't matter.
+
+**2. Summarization**
+Instead of dropping old turns entirely, you compress them into a rolling summary and pass that summary as context alongside recent turns. This extends the effective memory range significantly, but it's lossy — nuance and specifics tend to evaporate in compression. "The user is allergic to shellfish" can become "dietary restrictions noted," which is useless. The quality of this strategy lives or dies on how well you design the summarizer prompt.
+
+**3. Token Budget**
+You walk backwards through the conversation history and include turns until you hit a token ceiling, then stop. This is the most faithful to how real model limits actually work — you're reasoning directly about cost rather than turn count. The tradeoff is that the cutoff point is less predictable than a window, and at low budgets it behaves similarly to a small sliding window anyway.
+
+The deeper insight across all three is that none of them are a substitute for persistent storage. Facts that must never be forgotten — user preferences, names, critical context — should live in a database and be injected into every session explicitly, not left to float in the context window and eventually fall off.
+
+---
+
 A browser-based lab for exploring how different memory strategies affect long-running conversations with Claude. No build step, no framework, no dependencies — one HTML file.
 
 ---
