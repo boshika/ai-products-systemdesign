@@ -19,3 +19,14 @@ We embed a context meter in the chat UI that shows turn count in plain language,
 | **Sliding Window** | Free | Fixed window (e.g. 4 turns) = N tokens per call = X cents per 100 conversations. Predictable and cheap. |
 | **Summarization** | Paid | Adds a periodic compression call, amortised across turns rather than charged per message. More expensive than window but predictably so — right for users who need longer memory. |
 | **Token Budget** | Enterprise | Customer sets the token ceiling explicitly. Gives them direct cost control and lets them encode limits into their contract. |
+
+
+## 3. Who owns what strategy
+
+**What is the explicit list of facts your product guarantees to remember across sessions, and who owns the decision when that list needs to change?**
+
+This is a multi-dimensional question. It has to be answered from different viewpoints — the user, stakeholders, and compliance and privacy.
+The user expects a frictionless experience. They would expect to leave the conversation and pick back up with the same context they left — much like how iMessage syncs your full conversation history across devices invisibly. You pick up a new iPhone and everything is there. You never think about the mechanism, you just feel the continuity. That is the experience bar your product needs to meet.
+What Apple got right that most products don't is the separation of sync from access. iMessage stores your data in order to return it to you, not in order to read it. Your messages are end-to-end encrypted — Apple is in the middle but cannot read the content. Deletion is user-controlled and permanent. That is the gold standard for how pinned user facts should behave in a stateful chat product — owned by the user, deletable on demand, invisible in operation.
+Stakeholders expect to track and document user data to better understand the user. That ambition is legitimate but it needs to stay within the bounds of compliance frameworks like GDPR and CCPA. The critical distinction is whether data flows toward the business or back to the user. iMessage flows data back to the user. Most enterprise products flow it toward the business. A well-designed product finds a way to serve both without violating either.
+When user experience and data ambitions conflict with compliance requirements, compliance is non-negotiable — but the PM's job is to design consent and transparency mechanisms that honour all three without making the user feel the friction.
