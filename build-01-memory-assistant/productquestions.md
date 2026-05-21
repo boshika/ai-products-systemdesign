@@ -31,10 +31,15 @@ What Apple got right that most products don't is the separation of sync from acc
 Stakeholders expect to track and document user data to better understand the user. That ambition is legitimate but it needs to stay within the bounds of compliance frameworks like GDPR and CCPA. The critical distinction is whether data flows toward the business or back to the user. iMessage flows data back to the user. Most enterprise products flow it toward the business. A well-designed product finds a way to serve both without violating either.
 When user experience and data ambitions conflict with compliance requirements, compliance is non-negotiable — but the PM's job is to design consent and transparency mechanisms that honour all three without making the user feel the friction.
 
-## 4. failure modes and resilience
+## 4. Failure modes and resilience
 
 **When the memory strategy silently fails — a summarizer compresses away a critical user preference, or a window drops an important early turn — how does your product detect it, and what is the recovery path for the user?**
 
 There are two scenariois to define 1. During a single session memmory drop 2. Between sessions memory drop.
 For scenario 1. log that capture summarization lengths can be useful. In this case if we are expecting summarization to be say 260 tokens, but it is less than that, then we can log and capture that as a anomlous event in Cloudwatch(from Lambda). Also the pin feature on the UI, captures important user information that is added to the persistent memory in DynamoDB, this layer does not rely on summarization. 
 For scenario 2. is a integrity issues in the persistent layer, that means DyanmoDB does not contain information needed for consistency between sessions. In this case, better to state what is known, and prompt the user to re-enter any information that was missed. Also re-pinning this new information might help as well, in restoring and/or adding relevant information. One solution could be, prompting the user to re-pin important information prior to reaching session limit.
+
+## 5. Token costs and margins
+
+**If Bedrock charges per token and your memory strategy directly controls how many tokens are sent per call, how does token cost factor into your feature roadmap prioritization and your margin model?**
+
