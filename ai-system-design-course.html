@@ -171,7 +171,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-we
 
 <div class="philosophy">
   <div class="phil-label">Course Philosophy</div>
-  <div class="phil-text">System design is not about memorizing architectures — it's about <strong>reasoning through trade-offs under constraints</strong>. Every week teaches you a mental model, not a blueprint. By Week 8 you should be able to walk into any system design conversation, draw a reasonable starting architecture, and ask the right questions to refine it. <strong>Your H&M GenAI control plane is the running case study</strong> — every week reframes what you built against new system design lenses.</div>
+  <div class="phil-text">System design is not about memorizing architectures — it's about <strong>reasoning through trade-offs under constraints</strong>. Every week teaches you a mental model, not a blueprint. By Week 8 you should be able to walk into any system design conversation, draw a reasonable starting architecture, and ask the right questions to refine it. <strong>Your GenAI control plane is the running case study</strong> — every week reframes what you built against new system design lenses.</div>
 </div>
 
 <div class="overview-grid">
@@ -200,7 +200,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-we
   <div class="cap-desc">By the end of Week 8 you'll have a complete AI System Design Portfolio — architecture diagrams you can draw from memory, trade-off frameworks you can apply to any system, and structured answers to the 8 most common AI system design interview questions.</div>
   <ul class="cap-deliverables">
     <li class="cap-del">8 architecture diagrams — one per week — drawn from memory and annotated with trade-offs</li>
-    <li class="cap-del">The H&M control plane system design document — full architecture, decisions, and what you'd change</li>
+    <li class="cap-del">The control plane system design document — full architecture, decisions, and what you'd change</li>
     <li class="cap-del">5 system design interview answers — structured, timed, whiteboard-ready</li>
     <li class="cap-del">Your personal system design framework — how you approach any AI system design problem from scratch</li>
     <li class="cap-del">Trade-off cheat sheet — the 20 most important AI system design trade-offs, memorized and applicable</li>
@@ -262,7 +262,7 @@ const weeks = [
       title:"Whiteboard exercise — timed",
       desc:"Set a timer for 30 minutes. Design a real-time AI chat system out loud as if you're in an interview. Talk through your requirements, estimate scale, draw the high-level diagram, deep dive on the inference service, and name three trade-offs. Record yourself. Watch it back. What was unclear? What did you skip?"
     },
-    hm:"Your H&M GenAI control plane is a system you designed and shipped. Retroactively apply the system design framework to it: what were the functional requirements, what were the non-functional requirements, what was the scale (QPS, token throughput, number of use cases), and what were the three most important trade-offs you made? This becomes the foundation of your system design portfolio."
+    hm:"Your GenAI control plane is a system you designed and shipped. Retroactively apply the system design framework to it: what were the functional requirements, what were the non-functional requirements, what was the scale (QPS, token throughput, number of use cases), and what were the three most important trade-offs you made? This becomes the foundation of your system design portfolio."
   },
   {
     num:"Week 02",
@@ -360,7 +360,7 @@ const weeks = [
     ],
     exercise:{
       title:"Model Serving Cost Calculator",
-      desc:"For your H&M control plane (or a target company scenario), calculate the model serving cost at three scales: 10K queries/day, 100K queries/day, 1M queries/day. For each scale: which deployment pattern (managed API vs self-hosted) is more cost-effective and at what query volume does the crossover happen? Show your math. This directly maps to T08 (inference cost) in your interview prep."
+      desc:"For your control plane (or a target company scenario), calculate the model serving cost at three scales: 10K queries/day, 100K queries/day, 1M queries/day. For each scale: which deployment pattern (managed API vs self-hosted) is more cost-effective and at what query volume does the crossover happen? Show your math. This directly maps to T08 (inference cost) in your interview prep."
     },
     project:{
       title:"Model Deployment Architecture",
@@ -414,7 +414,7 @@ const weeks = [
     ],
     exercise:{
       title:"Data Pipeline Design",
-      desc:"Design the data pipeline for your H&M control plane's document ingestion and embedding update process. How did documents get from source systems into the vector database? How were updates handled? What was the latency between a document update and it being available for retrieval? Draw the pipeline, identify where data quality could fail silently, and design a validation layer."
+      desc:"Design the data pipeline for your control plane's document ingestion and embedding update process. How did documents get from source systems into the vector database? How were updates handled? What was the latency between a document update and it being available for retrieval? Draw the pipeline, identify where data quality could fail silently, and design a validation layer."
     },
     project:{
       title:"Feature Engineering Architecture",
@@ -429,7 +429,7 @@ const weeks = [
   {
     num:"Week 05",
     title:"AI Platform Architecture",
-    theme:"Building the infrastructure layer that lets an entire organization build AI — what you built at H&M",
+    theme:"Building the infrastructure layer that lets an entire organization build AI — what you built",
     tags:["arch","design"],
     concepts:[
       "The AI platform as an internal developer platform: the three layers every enterprise AI platform must provide — model access, developer tooling, and governance infrastructure",
@@ -464,11 +464,11 @@ const weeks = [
       {title:"AWS Well-Architected Framework for ML", detail:"How AWS recommends structuring enterprise ML platforms"},
       {title:"Andreessen Horowitz — The AI Infrastructure Stack", detail:"Strategic view of where platforms sit in the stack"},
       {title:"Google — MLOps on Google Cloud", detail:"How enterprise AI platforms are structured on GCP"},
-      {title:"Your own H&M control plane", detail:"You built one of these — document it as a case study"}
+      {title:"Your own control plane", detail:"You built one of these — document it as a case study"}
     ],
     exercise:{
       title:"Control Plane Architecture Diagram",
-      desc:"Draw the complete architecture of your H&M GenAI control plane as a system design diagram. Include: every component, every data flow, the control plane vs data plane separation, how governance was enforced, and how costs were attributed. This is your most important exercise — it turns your lived experience into a communicable artifact."
+      desc:"Draw the complete architecture of your GenAI control plane as a system design diagram. Include: every component, every data flow, the control plane vs data plane separation, how governance was enforced, and how costs were attributed. This is your most important exercise — it turns your lived experience into a communicable artifact."
     },
     project:{
       title:"Enterprise AI Platform Design",
@@ -478,7 +478,7 @@ const weeks = [
       title:"Whiteboard exercise — timed",
       desc:"30 minutes. Design an AI platform for a financial services company with 20 teams, strict regulatory requirements, and a hard $2M annual inference budget. The platform must enforce content policies, track every request for audit, and prevent any team from exceeding their monthly budget. Draw it, explain it, name the governance trade-offs."
     },
-    hm:"This week IS your H&M story. Use the exercise to document your control plane as a system design diagram. Then answer: what architectural decisions would you make differently now? What patterns from this week's curriculum — control plane vs data plane, sidecar governance, policy-as-code — did you implement intuitively, and which did you miss? This document becomes your primary system design interview story."
+    hm:"This week IS your story. Use the exercise to document your control plane as a system design diagram. Then answer: what architectural decisions would you make differently now? What patterns from this week's curriculum — control plane vs data plane, sidecar governance, policy-as-code — did you implement intuitively, and which did you miss? This document becomes your primary system design interview story."
   },
   {
     num:"Week 06",
@@ -522,7 +522,7 @@ const weeks = [
     ],
     exercise:{
       title:"Observability Gap Analysis",
-      desc:"Audit your H&M control plane's observability stack. For each of the five observability layers (logs, metrics, traces, eval pipeline, cost monitoring): what did you have, what were you missing, and what production problems did the gaps cause? Design the observability architecture you wish you'd had — this is your Week 6 portfolio artifact."
+      desc:"Audit your control plane's observability stack. For each of the five observability layers (logs, metrics, traces, eval pipeline, cost monitoring): what did you have, what were you missing, and what production problems did the gaps cause? Design the observability architecture you wish you'd had — this is your Week 6 portfolio artifact."
     },
     project:{
       title:"AI Observability System Design",
@@ -576,7 +576,7 @@ const weeks = [
     ],
     exercise:{
       title:"Failure Mode Mapping",
-      desc:"For your H&M control plane, map every failure mode you experienced or could have experienced: model API outages, latency spikes, cost overruns, data quality failures, governance violations. For each: what was the blast radius, how long until detection, and what was the recovery path? Then design the reliability architecture that would have caught each failure earlier and contained it better."
+      desc:"For your control plane, map every failure mode you experienced or could have experienced: model API outages, latency spikes, cost overruns, data quality failures, governance violations. For each: what was the blast radius, how long until detection, and what was the recovery path? Then design the reliability architecture that would have caught each failure earlier and contained it better."
     },
     project:{
       title:"Reliability and Cost Optimization Design",
@@ -610,7 +610,7 @@ const weeks = [
       "Connecting trade-offs to product outcomes: every system design trade-off has a user-facing manifestation — latency → user experience, cost → pricing, reliability → trust"
     ],
     interview:[
-      "SD08 — Design the complete GenAI control plane you built at H&M (your capstone answer)",
+      "SD08 — Design the complete GenAI control plane you built (your capstone answer)",
       "This is your home territory. You should be able to answer this better than any other candidate in any room.",
       "Structure: requirements (governance, cost control, developer experience, responsible AI) → scale estimation (30+ use cases, N teams, X queries/day) → architecture (all components) → key decisions → outcomes → what you'd change",
       "Time yourself: a complete answer should take 20-25 minutes. Practice until you can deliver it fluently without notes."
@@ -620,7 +620,7 @@ const weeks = [
       {title:"System Design Interview — Alex Xu Vol.2", detail:"Advanced system design patterns — good for Week 8 deepening"},
       {title:"Exponent — System Design interview practice", detail:"Practice platform with AI PM system design questions"},
       {title:"ByteByteGo — System Design YouTube", detail:"Visual walkthroughs — use for components you're still shaky on"},
-      {title:"Your H&M control plane documentation", detail:"Your primary interview material — know it cold"}
+      {title:"Your control plane documentation", detail:"Your primary interview material — know it cold"}
     ],
     exercise:{
       title:"The 5 System Design Interviews",
@@ -628,13 +628,13 @@ const weeks = [
     },
     project:{
       title:"AI System Design Portfolio — Complete",
-      desc:"Assemble your complete AI System Design Portfolio: (1) 8 architecture diagrams drawn from memory with annotations. (2) H&M control plane system design document — complete architecture, key decisions, outcomes, what you'd change. (3) 5 system design interview answers — structured, timed, whiteboard-ready. (4) Personal system design framework — your approach to any AI system design problem. (5) Trade-off cheat sheet — 20 trade-offs, memorized."
+      desc:"Assemble your complete AI System Design Portfolio: (1) 8 architecture diagrams drawn from memory with annotations. (2) Control plane system design document — complete architecture, key decisions, outcomes, what you'd change. (3) 5 system design interview answers — structured, timed, whiteboard-ready. (4) Personal system design framework — your approach to any AI system design problem. (5) Trade-off cheat sheet — 20 trade-offs, memorized."
     },
     assessment:{
       title:"The Complete System Design Interview",
       desc:"Record a full 45-minute system design interview — ask yourself SD08 (the control plane question). Go through the complete format: requirements (5 min), scale estimation (5 min), high-level design (15 min), deep dive on two components (10 min), trade-offs (5 min), failure modes (5 min). Watch it back. Every diagram must be clear, every trade-off must be named, every decision must be justified."
     },
-    hm:"Write the final version of your H&M GenAI control plane system design document. Four sections: (1) The system: what it was, what it did, who it served. (2) The architecture: the complete diagram and explanation of every component. (3) The decisions: the five most important architectural decisions you made and why. (4) What you'd change: with everything you've learned in this course, what would you redesign and why? This is your most powerful interview asset — it demonstrates both experience and learning."
+    hm:"Write the final version of your GenAI control plane system design document. Four sections: (1) The system: what it was, what it did, who it served. (2) The architecture: the complete diagram and explanation of every component. (3) The decisions: the five most important architectural decisions you made and why. (4) What you'd change: with everything you've learned in this course, what would you redesign and why? This is your most powerful interview asset — it demonstrates both experience and learning."
   }
 ];
 
@@ -692,7 +692,7 @@ function buildWeeks() {
           <div class="assessment-card"><div class="as-title">${w.assessment.title}</div><div class="as-desc">${w.assessment.desc}</div></div>
         </div>
         <div class="wb-section">
-          <div class="wb-label wb-label-hm">⚡ H&M Control Plane Connection</div>
+          <div class="wb-label wb-label-hm">⚡ Control Plane Connection</div>
           <div class="hm-card"><div class="hm-label-inner">Apply this week to your real experience</div><div class="hm-text">${w.hm}</div></div>
         </div>
       </div>`;
