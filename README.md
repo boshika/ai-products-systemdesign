@@ -2,6 +2,23 @@
 
 System design notes and resources for **AI / ML products** — covering RAG pipelines, LLM application architecture, ML infrastructure, and AI platform design.
 
+> **Companion repo:** [product-interview-vault](https://github.com/boshika/product-interview-vault) covers the PM interview framing for these same topics — product strategy, metrics, behavioral stories, and interview answers. Use both together: this repo for technical depth and architecture, that repo for the PM lens and how to articulate it in interviews.
+
+---
+
+## How to Use These Repos Together
+
+| Topic | Technical depth (here) | PM interview framing |
+|-------|------------------------|----------------------|
+| RAG and knowledge systems | `rag_system_design/`, `systemdesign/week-02` | [AI-Technical/rag-and-knowledge-systems.md](https://github.com/boshika/product-interview-vault/blob/main/AI-Technical/rag-and-knowledge-systems.md) |
+| Agents and orchestration | `systemdesign/week-03` | [AI-Technical/agents-and-orchestration.md](https://github.com/boshika/product-interview-vault/blob/main/AI-Technical/agents-and-orchestration.md) |
+| Evaluation and quality | `systemdesign/week-06` | [AI-Technical/evaluation-and-quality.md](https://github.com/boshika/product-interview-vault/blob/main/AI-Technical/evaluation-and-quality.md) |
+| Model selection and cost | `systemdesign/week-05` | [AI-Technical/model-selection-and-cost.md](https://github.com/boshika/product-interview-vault/blob/main/AI-Technical/model-selection-and-cost.md) |
+| AI platform architecture | `systemdesign/week-05` | [Strategy/ai-product-strategy.md](https://github.com/boshika/product-interview-vault/blob/main/Strategy/ai-product-strategy.md) |
+| Safety and governance | `systemdesign/week-06` | [AI-Technical/safety-and-governance.md](https://github.com/boshika/product-interview-vault/blob/main/AI-Technical/safety-and-governance.md) |
+| Control plane build | `build-01-memory-assistant/` | [Strategy/Control-Plane-Story.md](https://github.com/boshika/product-interview-vault/blob/main/Strategy/Control-Plane-Story.md) |
+| System design capstone | `systemdesign/week-08` | [weekly/week-08-integration-and-capstone.md](https://github.com/boshika/product-interview-vault/blob/main/weekly/week-08-integration-and-capstone.md) |
+
 ---
 
 ## Structure
@@ -69,3 +86,10 @@ open ai-system-design-course.html
 ```
 
 No server or dependencies needed — fully offline-ready.
+
+---
+
+## Related Repositories
+
+- [product-interview-vault](https://github.com/boshika/product-interview-vault) — PM interview prep: strategy, metrics, behavioral, and AI product framing
+- [ai-knowledge-graph](https://github.com/boshika/ai-knowledge-graph) — AI and Cloud concepts knowledge base
