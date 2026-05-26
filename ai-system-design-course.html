@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI System Design — 8-Week Course</title>
+<style>
+:root {
+  --bg: #0A0C0A;
+  --bg2: #121512;
+  --bg3: #1A1E1A;
+  --bg4: #222622;
+  --rule: #282C28;
+  --rule2: #323832;
+  --text: #E4EAE4;
+  --text2: #8A9A8A;
+  --text3: #506050;
+  --green: #4A9E6B;
+  --green-bg: #081408;
+  --green-rule: #183028;
+  --blue: #4A7AB5;
+  --blue-bg: #080C14;
+  --blue-rule: #182040;
+  --purple: #8B5BB5;
+  --purple-bg: #100814;
+  --purple-rule: #281840;
+  --amber: #C8902A;
+  --amber-bg: #180E00;
+  --amber-rule: #382200;
+  --teal: #4A9EB5;
+  --teal-bg: #081418;
+  --teal-rule: #183040;
+  --red: #B54A4A;
+  --red-bg: #140808;
+  --red-rule: #381818;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-weight:300;min-height:100vh;line-height:1.6}
+.page{max-width:860px;margin:0 auto;padding:56px 28px 120px}
+
+.course-header{border-bottom:1px solid var(--rule2);padding-bottom:40px;margin-bottom:48px}
+.course-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.course-title{font-family:var(--font-serif);font-size:clamp(38px,6vw,62px);line-height:1.05;font-weight:700;color:var(--text);letter-spacing:-0.02em;margin-bottom:12px}
+.course-title em{font-style:italic;color:var(--green)}
+.course-subtitle{font-size:15px;color:var(--text2);line-height:1.7;max-width:580px;margin-bottom:24px}
+.course-meta{display:flex;flex-wrap:wrap;gap:24px}
+.meta-item{display:flex;flex-direction:column;gap:3px}
+.meta-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3)}
+.meta-value{font-size:13px;font-weight:500;color:var(--green)}
+
+.philosophy{background:var(--bg2);border:1px solid var(--rule2);border-left:3px solid var(--green);border-radius:3px;padding:20px 24px;margin-bottom:48px}
+.phil-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.phil-text{font-size:14px;color:var(--text2);line-height:1.7}
+.phil-text strong{color:var(--text);font-weight:500}
+
+.overview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:48px}
+.overview-card{background:var(--bg2);border:1px solid var(--rule);border-radius:3px;padding:16px 18px}
+.ov-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.ov-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px}
+.ov-desc{font-size:12px;color:var(--text2);line-height:1.5}
+
+.week-section{margin-bottom:10px;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.week-header{display:flex;align-items:flex-start;gap:16px;padding:20px 24px;cursor:pointer;user-select:none;transition:background 0.15s}
+.week-header:hover{background:var(--bg2)}
+.week-section.open .week-header{background:var(--bg2)}
+.week-num{font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text3);flex-shrink:0;padding-top:3px;width:56px}
+.week-main{flex:1}
+.week-title{font-family:var(--font-serif);font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.2}
+.week-theme{font-size:12px;color:var(--text2);font-style:italic}
+.week-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tag{font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;padding:3px 8px;border-radius:2px;font-weight:500}
+.tag-arch{background:var(--green-bg);color:var(--green);border:1px solid var(--green-rule)}
+.tag-infra{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-rule)}
+.tag-design{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-rule)}
+.tag-interview{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-rule)}
+.week-expand{font-size:14px;color:var(--text3);flex-shrink:0;transition:transform 0.2s;padding-top:2px}
+.week-section.open .week-expand{transform:rotate(180deg)}
+
+.week-body{display:none;border-top:1px solid var(--rule)}
+.week-section.open .week-body{display:block}
+
+.wb-section{padding:20px 24px;border-bottom:1px solid var(--rule)}
+.wb-section:last-child{border-bottom:none}
+.wb-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;font-weight:500}
+.wb-label-concepts{color:var(--green)}
+.wb-label-patterns{color:var(--blue)}
+.wb-label-tradeoffs{color:var(--purple)}
+.wb-label-interview{color:var(--amber)}
+.wb-label-resources{color:var(--text3)}
+.wb-label-exercise{color:var(--amber)}
+.wb-label-project{color:var(--teal)}
+.wb-label-assessment{color:var(--red)}
+.wb-label-hm{color:var(--green)}
+
+.wb-items{list-style:none;display:flex;flex-direction:column;gap:6px}
+.wb-item{font-size:13px;color:var(--text2);line-height:1.55;display:flex;gap:10px}
+.wb-item::before{content:"→";flex-shrink:0;color:var(--text3)}
+.wb-item strong{color:var(--text);font-weight:500}
+
+.exercise-card{background:var(--amber-bg);border:1px solid var(--amber-rule);border-radius:3px;padding:14px 16px}
+.ex-title{font-size:13px;font-weight:500;color:var(--amber);margin-bottom:6px}
+.ex-desc{font-size:12.5px;color:#907040;line-height:1.6}
+
+.project-card{background:var(--teal-bg);border:1px solid var(--teal-rule);border-radius:3px;padding:14px 16px}
+.pr-title{font-size:13px;font-weight:500;color:var(--teal);margin-bottom:6px}
+.pr-desc{font-size:12.5px;color:#406070;line-height:1.6}
+
+.assessment-card{background:var(--red-bg);border:1px solid var(--red-rule);border-radius:3px;padding:14px 16px}
+.as-title{font-size:13px;font-weight:500;color:var(--red);margin-bottom:6px}
+.as-desc{font-size:12.5px;color:#705050;line-height:1.6}
+
+.hm-card{background:var(--green-bg);border:1px solid var(--green-rule);border-left:3px solid var(--green);border-radius:3px;padding:14px 16px}
+.hm-label-inner{font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+.hm-text{font-size:12.5px;color:#408060;line-height:1.6}
+
+.diagram-box{background:var(--bg3);border:1px solid var(--rule2);border-radius:3px;padding:16px;margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--text3);line-height:1.8;white-space:pre}
+
+.resource-list{list-style:none;display:flex;flex-direction:column;gap:4px}
+.resource-item{font-size:12.5px;color:var(--text2);display:flex;gap:10px;line-height:1.5}
+.resource-item::before{content:"◦";color:var(--text3);flex-shrink:0}
+.resource-item em{color:var(--text3);font-style:normal}
+
+.capstone{background:var(--bg2);border:1px solid var(--rule2);border-top:3px solid var(--green);border-radius:3px;padding:28px 32px;margin-top:32px}
+.cap-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--green);margin-bottom:10px}
+.cap-title{font-family:var(--font-serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:10px}
+.cap-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:16px}
+.cap-deliverables{list-style:none;display:flex;flex-direction:column;gap:6px}
+.cap-del{font-size:13px;color:var(--text2);display:flex;gap:10px;line-height:1.5}
+.cap-del::before{content:"✦";color:var(--green);flex-shrink:0;font-size:10px;padding-top:2px}
+
+.progress-bar-wrap{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--rule);padding:10px 0;margin-bottom:8px;z-index:10}
+.prog-meta{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px;padding:0 28px}
+.prog-bar{height:2px;background:var(--rule2);display:flex;overflow:hidden}
+.prog-fill{height:100%;background:var(--green);transition:width 0.3s}
+
+@media(max-width:600px){
+  .page{padding:32px 16px 80px}
+  .overview-grid{grid-template-columns:1fr}
+  .week-header{padding:16px}
+  .wb-section{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar-wrap">
+  <div class="prog-meta">
+    <span id="prog-label">0 of 8 weeks opened</span>
+    <span>AI System Design · Staff → Principal PM</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div class="page">
+
+<div class="course-header">
+  <div class="course-label">Personal Curriculum · Built for You</div>
+  <h1 class="course-title">AI System <em>Design</em></h1>
+  <p class="course-subtitle">An 8-week course that takes you from following technical architecture discussions to leading them. Calibrated for a Staff/Principal AI PM who needs to draw systems on whiteboards, challenge engineering assumptions, and speak credibly in system design interviews.</p>
+  <div class="course-meta">
+    <div class="meta-item"><span class="meta-label">Duration</span><span class="meta-value">8 weeks</span></div>
+    <div class="meta-item"><span class="meta-label">Weekly commitment</span><span class="meta-value">8–10 hours</span></div>
+    <div class="meta-item"><span class="meta-label">Technical level</span><span class="meta-value">Intermediate → Advanced</span></div>
+    <div class="meta-item"><span class="meta-label">Calibrated for</span><span class="meta-value">Staff → Principal PM</span></div>
+    <div class="meta-item"><span class="meta-label">Follows</span><span class="meta-value">AI PM Course (Week 8+)</span></div>
+  </div>
+</div>
+
+<div class="philosophy">
+  <div class="phil-label">Course Philosophy</div>
+  <div class="phil-text">System design is not about memorizing architectures — it's about <strong>reasoning through trade-offs under constraints</strong>. Every week teaches you a mental model, not a blueprint. By Week 8 you should be able to walk into any system design conversation, draw a reasonable starting architecture, and ask the right questions to refine it. <strong>Your H&M GenAI control plane is the running case study</strong> — every week reframes what you built against new system design lenses.</div>
+</div>
+
+<div class="overview-grid">
+  <div class="overview-card">
+    <div class="ov-label">Architecture fluency</div>
+    <div class="ov-title">Draw and explain systems</div>
+    <div class="ov-desc">By Week 8 you can whiteboard any AI system from scratch, explain every component, and justify every design decision.</div>
+  </div>
+  <div class="overview-card">
+    <div class="ov-label">Trade-off reasoning</div>
+    <div class="ov-title">Challenge engineering decisions</div>
+    <div class="ov-desc">You don't need to write production code — you need to know what questions to ask and when to push back.</div>
+  </div>
+  <div class="overview-card">
+    <div class="ov-label">Interview readiness</div>
+    <div class="ov-title">System design interview patterns</div>
+    <div class="ov-desc">The 8 most common AI system design interview questions, each with a structured approach and practice framework.</div>
+  </div>
+</div>
+
+<div id="weeks"></div>
+
+<div class="capstone">
+  <div class="cap-label">Week 8 Capstone · Final Project</div>
+  <div class="cap-title">The AI System Design Portfolio</div>
+  <div class="cap-desc">By the end of Week 8 you'll have a complete AI System Design Portfolio — architecture diagrams you can draw from memory, trade-off frameworks you can apply to any system, and structured answers to the 8 most common AI system design interview questions.</div>
+  <ul class="cap-deliverables">
+    <li class="cap-del">8 architecture diagrams — one per week — drawn from memory and annotated with trade-offs</li>
+    <li class="cap-del">The H&M control plane system design document — full architecture, decisions, and what you'd change</li>
+    <li class="cap-del">5 system design interview answers — structured, timed, whiteboard-ready</li>
+    <li class="cap-del">Your personal system design framework — how you approach any AI system design problem from scratch</li>
+    <li class="cap-del">Trade-off cheat sheet — the 20 most important AI system design trade-offs, memorized and applicable</li>
+  </ul>
+</div>
+
+</div>
+
+<script>
+const weeks = [
+  {
+    num:"Week 01",
+    title:"Foundations of AI System Design",
+    theme:"The mental model that underlies every architecture decision — before you touch a single component",
+    tags:["arch","design"],
+    concepts:[
+      "The system design interview format — clarify requirements → estimate scale → design high-level → deep dive → trade-offs. This is the structure you'll use every week.",
+      "Functional vs non-functional requirements — what the system must do vs how well it must do it. AI systems have unique non-functional requirements: latency tolerance, quality variance, cost sensitivity, and model versioning.",
+      "The CAP theorem for AI systems — consistency, availability, partition tolerance — and why AI systems make different trade-offs than traditional software",
+      "Scalability patterns — horizontal vs vertical scaling, stateless vs stateful services, and why AI inference is fundamentally different from CRUD at scale",
+      "The eight most common AI system design interview questions — what they test and the pattern each follows",
+      "How to draw a system diagram — the notation, the level of detail, and the order in which to build the diagram on a whiteboard"
+    ],
+    patterns:[
+      "The system design framework: Requirements → Scale estimation → High-level design → Component deep dive → Trade-offs → Failure modes",
+      "How to estimate scale for AI systems: QPS (queries per second), token throughput, storage requirements, and inference cost at scale",
+      "The PM's role in system design: you don't design the implementation — you clarify requirements, challenge assumptions, and own the trade-off decisions",
+      "How to read an architecture diagram: what each component does, how data flows, and where the bottlenecks typically live",
+      "The five questions to ask before any system design: Who are the users? What are the latency requirements? What is the scale? What are the consistency requirements? What are the cost constraints?"
+    ],
+    tradeoffs:[
+      "Latency vs throughput — optimizing for one typically degrades the other and AI systems force explicit choices about which matters more",
+      "Consistency vs availability — in AI systems, eventual consistency is often acceptable but the failure modes are different and less predictable",
+      "Cost vs quality — the central AI system design trade-off that doesn't exist in traditional systems",
+      "Build vs buy at the infrastructure level — when to use managed services vs build your own components",
+      "Synchronous vs asynchronous — when AI inference should be real-time vs queued and how this changes the architecture"
+    ],
+    interview:[
+      "SD01 — Design a real-time AI chat system (like ChatGPT)",
+      "The structure: clarify whether it's single-turn or multi-turn, what latency is acceptable, how many concurrent users, whether you need memory. Then: API gateway → load balancer → inference service → streaming response → session store for memory.",
+      "Key trade-off to mention: streaming via Server-Sent Events vs WebSockets — SSE is simpler and sufficient for most cases"
+    ],
+    resources:[
+      {title:"System Design Interview — Alex Xu Vol.1", detail:"Chapters 1-2: Scale from zero, back-of-envelope estimation"},
+      {title:"Designing Data-Intensive Applications — Martin Kleppmann", detail:"Chapter 1: Reliable, scalable, maintainable systems"},
+      {title:"ByteByteGo — System Design newsletter", detail:"Free, excellent visual explanations of system components"},
+      {title:"AI Engineering — Chip Huyen", detail:"Chapter on AI system architecture patterns"},
+      {title:"a16z — AI infrastructure stack overview", detail:"Free blog post — the full stack from chips to applications"}
+    ],
+    exercise:{
+      title:"Draw Your First AI System",
+      desc:"Without looking at any reference, draw the architecture of a simple AI Q&A system from scratch. Include: client, API gateway, load balancer, inference service, model, vector database, cache, and monitoring. Label every component and every data flow arrow. Then compare to the standard RAG architecture — what did you get right, what did you miss, and why?"
+    },
+    project:{
+      title:"System Design Framework — Personal Template",
+      desc:"Build your personal system design framework template — a one-page structured approach you'll use for every system design problem. Must include: the five clarifying questions you always ask, your scale estimation checklist, the components you always consider, and your trade-off evaluation criteria. This becomes your whiteboard starting point for every interview."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"Set a timer for 30 minutes. Design a real-time AI chat system out loud as if you're in an interview. Talk through your requirements, estimate scale, draw the high-level diagram, deep dive on the inference service, and name three trade-offs. Record yourself. Watch it back. What was unclear? What did you skip?"
+    },
+    hm:"Your H&M GenAI control plane is a system you designed and shipped. Retroactively apply the system design framework to it: what were the functional requirements, what were the non-functional requirements, what was the scale (QPS, token throughput, number of use cases), and what were the three most important trade-offs you made? This becomes the foundation of your system design portfolio."
+  },
+  {
+    num:"Week 02",
+    title:"LLM Application Architecture",
+    theme:"The full production stack for LLM-powered products — every layer and why it exists",
+    tags:["arch","infra"],
+    concepts:[
+      "The LLM application stack from bottom to top: foundation model → model serving layer → orchestration layer → application layer → user experience layer — and the PM decision at each layer",
+      "Prompt pipeline architecture: system prompt construction → user input processing → context injection → model invocation → output parsing → response formatting",
+      "The orchestration layer: LangChain, LlamaIndex, and custom orchestrators — what they do, when to use each, and the PM-level decision criteria",
+      "Streaming architecture: how Server-Sent Events (SSE) and WebSockets work, why streaming dramatically changes UX, and the infrastructure implications",
+      "Multi-turn conversation architecture: session management, conversation history storage, and the three memory strategies (window, summary, vector) implemented at the infrastructure level",
+      "API gateway design for LLM applications: rate limiting, authentication, request validation, response caching, and cost attribution"
+    ],
+    patterns:[
+      "The request path for a production LLM query: client → CDN → API gateway → auth service → rate limiter → orchestrator → prompt builder → model API → output parser → response cache → client",
+      "The RAG integration pattern: how retrieval plugs into the orchestration layer and the two integration points (pre-retrieval and post-retrieval)",
+      "The caching pattern for LLM applications: exact match cache → semantic cache → response cache — when to use each and the consistency trade-offs",
+      "The async pattern: when to queue LLM requests vs handle them synchronously — and the architecture implications of each",
+      "The fan-out pattern: how to parallelize multiple LLM calls and aggregate results — useful for multi-agent systems and ensemble approaches"
+    ],
+    tradeoffs:[
+      "Latency vs cost: streaming reduces perceived latency but doesn't reduce token cost — the two metrics are orthogonal and require separate optimization",
+      "Caching hit rate vs staleness: semantic caches improve cost efficiency but introduce the risk of serving stale AI responses to slightly different queries",
+      "Orchestration framework vs custom: frameworks like LangChain reduce development time but add dependencies, abstractions, and debugging complexity",
+      "Synchronous vs asynchronous: real-time responses delight users but queue-based architectures are more resilient and cheaper at scale",
+      "Monolith vs microservices for LLM apps: the standard microservices arguments, plus the unique AI consideration that model dependencies create tight coupling"
+    ],
+    interview:[
+      "SD02 — Design a production RAG system at enterprise scale",
+      "Structure: document ingestion pipeline (async) → chunking service → embedding service → vector database → query service (sync) → reranking service → LLM service → response service",
+      "Key trade-offs: Kendra vs OpenSearch vs pgvector for the vector store. Batch vs streaming for document ingestion. Semantic cache to reduce duplicate embedding costs.",
+      "Scale consideration: at 10K queries/day, managed services. At 1M queries/day, you need to think about embedding cost optimization and vector index sharding."
+    ],
+    resources:[
+      {title:"a16z — Emerging Architectures for LLM Applications", detail:"The definitive overview of the LLM application stack"},
+      {title:"LangChain documentation — architecture overview", detail:"Understand the orchestration layer from the inside"},
+      {title:"AWS Bedrock architecture documentation", detail:"How AWS structures the managed LLM application stack"},
+      {title:"Simon Willison — LLM application architecture posts", detail:"Practical, opinionated, updated regularly"},
+      {title:"Chip Huyen — Building LLM Applications for Production", detail:"Free blog post — the production gap between demos and real systems"}
+    ],
+    exercise:{
+      title:"Map the Request Path",
+      desc:"Pick any LLM-powered product you use (ChatGPT, Claude, Perplexity, Notion AI). Draw the complete request path from the moment you hit Enter to the moment you see the first token. Label every component you can infer exists. Then look up the company's engineering blog and compare — what did you get right, what surprised you, and what does the gap tell you about your mental model?"
+    },
+    project:{
+      title:"LLM Application Architecture Diagram",
+      desc:"Design the complete architecture for a production LLM application at one of your Tier 1 target companies. Must include: all layers from client to model, the data flow for a typical query, the caching strategy, the async vs sync decision with rationale, the streaming implementation, and three named trade-offs with your recommended resolution. Draw it as a whiteboard diagram with annotations."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"30 minutes. Design a production RAG system for an enterprise knowledge base. Requirements: 10,000 documents, 500 concurrent users, sub-2-second latency, document updates weekly. Draw it, explain it, name the trade-offs. Record and review."
+    },
+    hm:"Your control plane was an LLM application architecture problem at enterprise scale. Map it against this week's patterns: what was your orchestration layer? How did you handle prompt construction across 30+ use cases? What was your caching strategy? What was your request path? Draw the architecture of your control plane as a system diagram — this is your Week 2 portfolio artifact."
+  },
+  {
+    num:"Week 03",
+    title:"ML Infrastructure & Model Serving",
+    theme:"How models get trained, stored, deployed, and served at production scale",
+    tags:["infra","arch"],
+    concepts:[
+      "The ML lifecycle from a systems perspective: data collection → feature engineering → model training → evaluation → deployment → monitoring → retraining — and where each phase creates infrastructure requirements",
+      "Model serving infrastructure: the difference between online serving (real-time inference) and offline serving (batch inference) — and when to use each",
+      "Inference optimization techniques: quantization (reducing model precision), distillation (smaller student models), pruning (removing weights), and batching (grouping requests) — what each does and the trade-offs",
+      "GPU vs CPU serving: when each is appropriate, the cost difference, and how it affects your model tier selection decisions",
+      "Model registry and versioning: how models are stored, versioned, and promoted through environments — and why this is a product problem as much as an infrastructure one",
+      "Containerization for ML: Docker, Kubernetes, and why ML workloads have unique containerization challenges (GPU drivers, large model weights, stateful inference)"
+    ],
+    patterns:[
+      "The model serving pattern: model registry → model server → inference endpoint → load balancer → API gateway — how requests flow and where latency accumulates",
+      "The blue-green deployment pattern for models: how to deploy a new model version without downtime and how to roll back if quality degrades",
+      "The shadow mode pattern: running a new model in parallel with the production model, logging outputs for comparison without serving them to users",
+      "The A/B testing pattern for models: routing a percentage of traffic to a new model version while measuring quality and business metrics",
+      "The batch inference pattern: when to pre-compute AI responses (recommendations, summaries, categorizations) rather than computing them at query time"
+    ],
+    tradeoffs:[
+      "Latency vs cost for inference: GPU instances are faster but expensive — the right choice depends on your latency SLA and query volume",
+      "Model size vs quality: larger models produce better outputs but cost more and are slower — the sweet spot depends on your use case",
+      "Online vs offline inference: real-time inference is more responsive but expensive; batch inference is cheaper but introduces staleness",
+      "Managed inference vs self-hosted: Bedrock/OpenAI API vs running your own inference cluster — the cost crossover point and when each is right",
+      "Single model vs model ensemble: ensembles improve quality but multiply inference cost and latency — justified only for high-stakes decisions"
+    ],
+    interview:[
+      "SD03 — Design an ML model serving system that handles 100K requests per minute",
+      "Structure: load balancer → inference cluster (auto-scaling) → model cache (keep hot models in GPU memory) → model registry (cold storage) → monitoring service",
+      "Key decisions: horizontal auto-scaling based on GPU utilization vs request queue depth. Request batching to improve GPU utilization. Model warmup to avoid cold start latency.",
+      "Scale math: at 100K RPM = ~1,667 RPS. If each inference takes 200ms, you need at least 334 concurrent inference threads. With batching of 8 requests, you need ~42 GPU threads. Work through this math out loud."
+    ],
+    resources:[
+      {title:"Hugging Face — Model serving documentation", detail:"How production model serving actually works"},
+      {title:"AWS SageMaker documentation", detail:"Managed model serving — understand what the managed service abstracts away"},
+      {title:"NVIDIA — Triton Inference Server docs", detail:"How GPU inference servers are architected"},
+      {title:"Chip Huyen — Designing ML Systems", detail:"Chapters on training and serving infrastructure"},
+      {title:"Martin Zinkevich — Rules of ML", detail:"Google's engineering best practices for production ML"}
+    ],
+    exercise:{
+      title:"Model Serving Cost Calculator",
+      desc:"For your H&M control plane (or a target company scenario), calculate the model serving cost at three scales: 10K queries/day, 100K queries/day, 1M queries/day. For each scale: which deployment pattern (managed API vs self-hosted) is more cost-effective and at what query volume does the crossover happen? Show your math. This directly maps to T08 (inference cost) in your interview prep."
+    },
+    project:{
+      title:"Model Deployment Architecture",
+      desc:"Design the full model deployment architecture for an AI product at a Tier 1 target company. Must include: model training pipeline, model registry, serving infrastructure, blue-green deployment process, rollback mechanism, and monitoring integration. Specify which components you'd use managed services for vs build yourself and why. Draw it as a whiteboard diagram."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"30 minutes. Design a model serving system that supports: multiple model versions in production simultaneously, A/B testing between versions, automatic rollback when quality degrades, and sub-100ms p95 latency. Draw it, explain it, name the trade-offs."
+    },
+    hm:"Your control plane served multiple models across 30+ use cases. How was model serving architected? How did you handle model updates — did you have a blue-green deployment process? What was your rollback mechanism when a model update degraded quality? What would a production-grade model serving architecture for your control plane have looked like? This connects directly to T13 (model versioning) in your interview bank."
+  },
+  {
+    num:"Week 04",
+    title:"Data Pipelines & Feature Engineering",
+    theme:"How data flows through an AI system — from raw ingestion to model-ready features",
+    tags:["infra","arch"],
+    concepts:[
+      "The data pipeline architecture: ingestion → validation → transformation → storage → serving — and the AI-specific requirements at each stage",
+      "Batch vs streaming data pipelines: when to use Apache Kafka (streaming) vs Apache Spark (batch) vs hybrid approaches — and the latency/cost trade-offs",
+      "The feature store: what it is, why it exists, the dual architecture (offline store for training + online store for serving), and why it solves the training-serving skew problem",
+      "Training-serving skew: the most common and costly ML production bug — when the data distribution at training time differs from data distribution at serving time",
+      "Data quality for AI: validation, monitoring, and the unique challenge that bad data in AI systems causes model degradation rather than system errors — silent failure vs loud failure",
+      "Vector storage and retrieval at scale: how production vector databases handle billions of vectors, HNSW indexing, and approximate nearest neighbor search"
+    ],
+    patterns:[
+      "The Lambda architecture: combining batch processing (for historical data) with stream processing (for real-time data) — the standard pattern for AI systems that need both",
+      "The feature store pattern: how features are computed once, stored, and served to both training and inference — eliminating duplication and ensuring consistency",
+      "The data validation pipeline: schema validation → statistical validation → model performance validation — the three layers that catch data quality issues before they reach the model",
+      "The CDC (Change Data Capture) pattern: how changes in production databases are streamed to AI systems in real time — critical for RAG systems with frequently updated knowledge bases",
+      "The data versioning pattern: how to version training datasets alongside model versions so you can reproduce any model and understand what data produced it"
+    ],
+    tradeoffs:[
+      "Batch vs streaming: streaming pipelines process data faster but are more complex to build, debug, and maintain — the right choice depends on how fresh your features need to be",
+      "Feature computation at training vs serving time: pre-computing features reduces serving latency but creates staleness; computing at serving time is fresh but slower and more expensive",
+      "Data freshness vs consistency: real-time data pipelines are fresher but introduce consistency challenges — distributed systems with eventual consistency are common in AI data stacks",
+      "Storage cost vs query performance: denormalizing data improves query speed but increases storage cost — the AI-specific version of this trade-off is large embedding storage vs retrieval speed",
+      "Data retention vs compliance: storing more data improves model quality over time but creates GDPR/CCPA compliance obligations — a product decision disguised as an infrastructure one"
+    ],
+    interview:[
+      "SD04 — Design a real-time recommendation system",
+      "Structure: user interaction stream → Kafka → feature computation service → feature store (online: Redis, offline: S3/Parquet) → model serving → recommendation API → A/B test layer",
+      "Key insight: the feature store is the architectural heart of this system — it's what makes recommendations fast (pre-computed features) while keeping them fresh (streaming updates)",
+      "Trade-off to name: pre-computing recommendations for all users vs computing on request. Pre-compute is faster but staleness is a real problem for users with rapidly changing preferences."
+    ],
+    resources:[
+      {title:"Designing Data-Intensive Applications — Kleppmann", detail:"Chapters 10-12: Batch processing, stream processing, the future of data systems"},
+      {title:"Feast — Feature Store documentation", detail:"The open-source feature store — understand the architecture"},
+      {title:"Databricks — What is a Feature Store", detail:"Clear explanation of the dual architecture problem"},
+      {title:"Confluent — Kafka for ML pipelines", detail:"How streaming data pipelines work in practice"},
+      {title:"Chip Huyen — Data Engineering for ML", detail:"Free blog post — the data infrastructure that ML requires"}
+    ],
+    exercise:{
+      title:"Data Pipeline Design",
+      desc:"Design the data pipeline for your H&M control plane's document ingestion and embedding update process. How did documents get from source systems into the vector database? How were updates handled? What was the latency between a document update and it being available for retrieval? Draw the pipeline, identify where data quality could fail silently, and design a validation layer."
+    },
+    project:{
+      title:"Feature Engineering Architecture",
+      desc:"Design a feature store architecture for an AI product at a target company. Must include: the offline store (training features), the online store (serving features), the feature computation pipeline, the validation layer, and how you'd handle feature freshness requirements. Specify the tech stack at each layer with rationale. Draw it as a whiteboard diagram with annotated trade-offs."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"30 minutes. Design a data pipeline that ingests customer transaction data in real time, computes fraud detection features, and serves them to a fraud detection model with sub-50ms latency. Draw it, explain the feature store architecture, name the consistency trade-offs."
+    },
+    hm:"Your control plane ingested documents and data from multiple source systems across 30+ use cases. How did you handle data freshness — how quickly did new documents appear in RAG responses after being updated? What was your data validation approach? What data quality failures did you encounter and how did you detect them? These become your data pipeline interview stories."
+  },
+  {
+    num:"Week 05",
+    title:"AI Platform Architecture",
+    theme:"Building the infrastructure layer that lets an entire organization build AI — what you built at H&M",
+    tags:["arch","design"],
+    concepts:[
+      "The AI platform as an internal developer platform: the three layers every enterprise AI platform must provide — model access, developer tooling, and governance infrastructure",
+      "Multi-tenancy in AI platforms: how to isolate workloads, attribute costs, and enforce governance across dozens of teams using shared infrastructure",
+      "The API gateway for an AI platform: not just routing, but cost metering, rate limiting by team and use case, PII detection, content filtering, and audit logging",
+      "Model routing architecture: how to route requests to different models based on use case type, cost constraints, latency requirements, and quality thresholds — automatically",
+      "The developer experience layer: SDKs, self-service portals, documentation, and the product design principles that make a platform adoptable rather than mandated",
+      "Platform governance architecture: approval workflows for new use cases, policy enforcement, responsible AI guardrails, and the audit trail that enterprise and regulated industries require"
+    ],
+    patterns:[
+      "The control plane vs data plane split: the control plane manages configuration and governance; the data plane handles actual inference traffic — separating them allows each to scale independently",
+      "The sidecar pattern for AI governance: injecting policy enforcement, logging, and monitoring as a sidecar proxy alongside every AI service rather than embedding it in each service",
+      "The quota and chargeback pattern: how to implement team-level spending limits, usage metering, and cost attribution across a shared AI platform",
+      "The policy-as-code pattern: encoding responsible AI policies (content filters, PII rules, rate limits) as configuration that can be versioned, reviewed, and audited",
+      "The self-service onboarding pattern: how to let new teams onboard to the AI platform without requiring a platform team ticket — the design that drives adoption vs mandated usage"
+    ],
+    tradeoffs:[
+      "Centralization vs autonomy: a centralized platform reduces duplication and improves governance but creates a bottleneck and limits team flexibility — the adoption problem you've lived",
+      "Flexibility vs standardization: more flexible platforms serve more use cases but are harder to govern; more standardized platforms are easier to govern but frustrate teams with edge cases",
+      "Managed services vs custom: using cloud provider AI services (Bedrock, Vertex) simplifies the platform but creates vendor dependency; building custom gives control but creates maintenance burden",
+      "Latency of governance vs governance quality: real-time governance (content filtering on every request) adds latency; async governance (reviewing logs after the fact) misses real-time harms",
+      "Platform team as gatekeeper vs enabler: governance-first platforms slow teams down; enablement-first platforms move fast but accumulate governance debt — the right balance is context-dependent"
+    ],
+    interview:[
+      "SD05 — Design an enterprise AI platform that supports 50 teams and 200 AI use cases",
+      "Structure: developer portal (self-service) → API gateway (rate limiting, metering, PII detection) → model router (cost/latency/quality routing) → model serving layer (Bedrock + custom) → data plane (logging, monitoring, audit) → control plane (policy management, quota management, onboarding)",
+      "Key PM insight to name: the hardest problem is adoption, not architecture. The platform must be the path of least resistance — easier to use than building your own — or teams will route around it.",
+      "Trade-off to highlight: synchronous vs asynchronous governance. Real-time content filtering adds 10-50ms latency to every request. Is that acceptable? It depends on the use case risk profile."
+    ],
+    resources:[
+      {title:"Platform Engineering — Evan Bottcher", detail:"Internal developer platforms — the architecture and the organizational model"},
+      {title:"AWS Well-Architected Framework for ML", detail:"How AWS recommends structuring enterprise ML platforms"},
+      {title:"Andreessen Horowitz — The AI Infrastructure Stack", detail:"Strategic view of where platforms sit in the stack"},
+      {title:"Google — MLOps on Google Cloud", detail:"How enterprise AI platforms are structured on GCP"},
+      {title:"Your own H&M control plane", detail:"You built one of these — document it as a case study"}
+    ],
+    exercise:{
+      title:"Control Plane Architecture Diagram",
+      desc:"Draw the complete architecture of your H&M GenAI control plane as a system design diagram. Include: every component, every data flow, the control plane vs data plane separation, how governance was enforced, and how costs were attributed. This is your most important exercise — it turns your lived experience into a communicable artifact."
+    },
+    project:{
+      title:"Enterprise AI Platform Design",
+      desc:"Design an enterprise AI platform for a Tier 1 target company that has 30 teams wanting to build AI products. Must include: the full architecture diagram, the developer onboarding flow, the governance architecture, the cost attribution model, the model routing logic, and the self-service portal design. This is your system design interview answer for SD05 — make it detailed and defensible."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"30 minutes. Design an AI platform for a financial services company with 20 teams, strict regulatory requirements, and a hard $2M annual inference budget. The platform must enforce content policies, track every request for audit, and prevent any team from exceeding their monthly budget. Draw it, explain it, name the governance trade-offs."
+    },
+    hm:"This week IS your H&M story. Use the exercise to document your control plane as a system design diagram. Then answer: what architectural decisions would you make differently now? What patterns from this week's curriculum — control plane vs data plane, sidecar governance, policy-as-code — did you implement intuitively, and which did you miss? This document becomes your primary system design interview story."
+  },
+  {
+    num:"Week 06",
+    title:"Evaluation & Observability Systems",
+    theme:"How to know if your AI system is working — in production, at scale, in real time",
+    tags:["infra","design"],
+    concepts:[
+      "The observability stack for AI systems: logs → metrics → traces — and the AI-specific additions: model quality metrics, prompt/response logging, and eval pipelines",
+      "Distributed tracing for AI: how to trace a single request across multiple AI services — the unique challenge that LLM calls are non-deterministic and multi-step",
+      "The eval pipeline as infrastructure: how to run automated quality assessments on production traffic at scale without breaking the bank on LLM-as-judge inference costs",
+      "Drift detection systems: how to detect when model performance is degrading in production — data drift, concept drift, and the alerting architecture that catches it early",
+      "The feedback loop architecture: how user feedback (thumbs up/down, corrections, regenerations) flows back into your eval system and eventually into model improvement",
+      "Cost observability: how to track inference spend in real time by model, by team, by use case — and the alerting that catches runaway costs before they become business problems"
+    ],
+    patterns:[
+      "The eval pipeline pattern: sample production traffic → run automated eval (LLM-as-judge or rule-based) → aggregate scores → compare to thresholds → alert on degradation",
+      "The shadow eval pattern: run evals asynchronously on a sample of production traffic without adding latency to the user-facing request — the right architecture for always-on eval",
+      "The golden path pattern: a curated set of representative queries whose answers you know — run these through the model on every deployment to catch regressions before they reach users",
+      "The anomaly detection pattern: statistical process control applied to AI quality metrics — detect when quality metrics drift outside normal ranges even without explicit thresholds",
+      "The observability-as-a-service pattern: centralizing logging, tracing, and eval across all AI use cases in one platform — what your control plane should have provided"
+    ],
+    tradeoffs:[
+      "Sampling rate vs observability completeness: logging every request gives full visibility but at scale costs more than the inference itself — the right sampling rate depends on your failure tolerance",
+      "Real-time eval vs async eval: synchronous evals add latency to production requests; async evals are cheaper but detect problems later — the right choice depends on how quickly problems cause harm",
+      "LLM-as-judge cost vs human eval accuracy: LLM-as-judge is scalable and cheap but introduces its own biases; human eval is more accurate but doesn't scale — use each at the right point in the funnel",
+      "Alert sensitivity vs alert fatigue: tight thresholds catch problems early but create alert fatigue; loose thresholds reduce noise but miss subtle degradations — calibrating this is a product decision",
+      "Centralized vs decentralized observability: centralized observability platforms give cross-cutting visibility; decentralized approaches let teams move faster — the platform trade-off again"
+    ],
+    interview:[
+      "SD06 — Design an AI quality monitoring system for a production LLM application",
+      "Structure: production inference → async sampling (10% of traffic) → eval queue (Kafka) → eval workers (LLM-as-judge) → metrics store (time series DB) → dashboard + alerting → feedback loop to golden dataset",
+      "Key numbers to know: at 1M queries/day with 10% sampling = 100K evals/day. At $0.001/eval = $100/day in eval inference cost. That's the budget conversation.",
+      "Trade-off to highlight: where to set the eval threshold for alerting. Set it too tight and you alert on normal variance. Set it too loose and you miss real degradation. This is a product judgment call."
+    ],
+    resources:[
+      {title:"Honeycomb — Observability Engineering", detail:"The definitive guide to observability — apply it to AI systems"},
+      {title:"Arize AI — ML Observability guide", detail:"AI-specific observability patterns and tools"},
+      {title:"Weights & Biases — Production ML monitoring", detail:"Drift detection and eval pipeline architecture"},
+      {title:"Hamel Husain — LLM Eval in production", detail:"Practical eval pipeline architecture for LLM applications"},
+      {title:"Google SRE Book — Monitoring distributed systems", detail:"Chapter 6: The foundation of production observability"}
+    ],
+    exercise:{
+      title:"Observability Gap Analysis",
+      desc:"Audit your H&M control plane's observability stack. For each of the five observability layers (logs, metrics, traces, eval pipeline, cost monitoring): what did you have, what were you missing, and what production problems did the gaps cause? Design the observability architecture you wish you'd had — this is your Week 6 portfolio artifact."
+    },
+    project:{
+      title:"AI Observability System Design",
+      desc:"Design a complete observability system for an AI platform serving 30+ use cases. Must include: the logging architecture, distributed tracing for multi-step AI requests, the async eval pipeline with sampling strategy, drift detection with alerting thresholds, cost monitoring with budget alerts, and the feedback loop from user signals to eval system. Draw it as a whiteboard diagram."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"30 minutes. Your production AI system's acceptance rate just dropped from 78% to 61% over 48 hours. Walk through your complete investigation process — which observability tools you'd use, in what order, and what hypotheses you'd test. This is a system design + diagnosis question. Draw the investigation flow."
+    },
+    hm:"Your control plane monitored quality across 30+ use cases. What was your observability stack? How did you detect quality degradation — reactively (users complaining) or proactively (monitoring catching it first)? What was your eval pipeline — did you have one? Design the observability system that your control plane should have had. This connects to M02 (metric drop diagnosis) and M09 (safety measurement) in your interview bank."
+  },
+  {
+    num:"Week 07",
+    title:"Scalability, Reliability & Cost Optimization",
+    theme:"How to build AI systems that work under pressure — at scale, under failure, within budget",
+    tags:["infra","arch","design"],
+    concepts:[
+      "The reliability vocabulary: SLA (service level agreement), SLO (service level objective), SLI (service level indicator), error budget — how these apply specifically to AI systems where 'correct' is probabilistic",
+      "Failure modes in AI systems: the unique failure modes that don't exist in traditional systems — model degradation, prompt injection, context window overflow, hallucination cascades in multi-agent systems",
+      "Circuit breakers for AI: how to prevent a failing model from taking down the entire application — the pattern and the AI-specific triggers",
+      "Graceful degradation for AI: the product design and system design decisions that allow an AI feature to fail without failing the entire product",
+      "Cost optimization at scale: the five levers for reducing AI inference cost without degrading quality — caching, routing, batching, model selection, and prompt optimization",
+      "The capacity planning problem for AI: why AI workloads are harder to capacity plan than traditional software (non-deterministic response size, GPU availability constraints, demand spikes)"
+    ],
+    patterns:[
+      "The circuit breaker pattern: monitoring error rate and latency → tripping the circuit when thresholds are exceeded → fallback to a simpler model or cached response → gradual recovery",
+      "The bulkhead pattern: isolating AI workloads so that a spike in one use case doesn't starve resources from other use cases — critical for shared AI platforms",
+      "The retry with exponential backoff pattern: the standard approach for handling transient model API failures — with AI-specific considerations around idempotency (retrying a generation request may produce different output)",
+      "The load shedding pattern: how to protect system stability by selectively dropping lower-priority requests when the system is at capacity — AI-specific priority queuing",
+      "The cost circuit breaker pattern: cutting off expensive model calls when team or system budget thresholds are hit — a product feature as much as a technical one"
+    ],
+    tradeoffs:[
+      "Redundancy vs cost: running multiple inference replicas improves availability but multiplies cost — the right N+1 configuration depends on your SLO and budget",
+      "Response quality vs availability: during model API outages, do you return a degraded response (simpler model) or an error? Most users prefer a degraded response — this is a product decision",
+      "Aggressive caching vs freshness: high cache hit rates dramatically reduce cost but introduce staleness — AI system caching requires explicit TTL decisions that don't exist in traditional systems",
+      "Horizontal scaling vs vertical scaling for inference: more smaller GPU instances vs fewer larger GPU instances — the right answer depends on your model size and request concurrency",
+      "Pre-warming vs on-demand: keeping inference capacity warm reduces cold start latency but wastes money during low-traffic periods — auto-scaling policies need AI-specific calibration"
+    ],
+    interview:[
+      "SD07 — Design a system that serves 10M AI requests per day with 99.9% availability",
+      "Scale math: 10M requests/day = ~116 RPS average. With 10x peak factor = 1,160 RPS peak. At 200ms/request = 232 concurrent connections. With 99.9% availability = 8.7 hours downtime/year.",
+      "Structure: global load balancer → regional clusters (active-active) → inference auto-scaling groups → circuit breaker layer → fallback model tier → cache layer (semantic + response)",
+      "Reliability pattern: primary model (frontier) → circuit breaker → fallback to smaller model → circuit breaker → cached response → error page. Each level degrades gracefully."
+    ],
+    resources:[
+      {title:"Google SRE Book", detail:"Chapters 1-4: Introduction to SRE, production environments, embracing risk, SLOs"},
+      {title:"Designing Data-Intensive Applications — Kleppmann", detail:"Chapters 8-9: Trouble with distributed systems, consistency and consensus"},
+      {title:"AWS Well-Architected Framework", detail:"Reliability pillar — apply to AI workloads"},
+      {title:"Netflix Tech Blog — Chaos Engineering", detail:"How Netflix tests reliability — principles apply to AI systems"},
+      {title:"Cloudflare Blog — Scaling infrastructure", detail:"Practical examples of large-scale system reliability"}
+    ],
+    exercise:{
+      title:"Failure Mode Mapping",
+      desc:"For your H&M control plane, map every failure mode you experienced or could have experienced: model API outages, latency spikes, cost overruns, data quality failures, governance violations. For each: what was the blast radius, how long until detection, and what was the recovery path? Then design the reliability architecture that would have caught each failure earlier and contained it better."
+    },
+    project:{
+      title:"Reliability and Cost Optimization Design",
+      desc:"Design the reliability and cost optimization architecture for an AI platform at scale. Must include: the circuit breaker configuration with triggers and fallbacks, the graceful degradation hierarchy, the cost circuit breaker with per-team budget enforcement, the auto-scaling policy with AI-specific calibration, and the capacity planning methodology. Show the failure response for three specific failure scenarios."
+    },
+    assessment:{
+      title:"Whiteboard exercise — timed",
+      desc:"30 minutes. Your AI platform is experiencing a model API outage affecting 30% of your use cases during peak traffic. Walk through your incident response: what happens automatically (circuit breakers, fallbacks), what you do manually, how you communicate to stakeholders, and what you change afterward. This is system design meets incident management."
+    },
+    hm:"Your control plane had cost control as a core pillar — describe the reliability and cost architecture you built. What happened when the model API went down? Did you have circuit breakers? What was your fallback strategy? What cost overruns did you experience and how did you catch them? What would a production-grade reliability architecture for your platform have looked like? This connects directly to your control plane case study."
+  },
+  {
+    num:"Week 08",
+    title:"System Design Interview Practice & Capstone",
+    theme:"Bringing it all together — from knowing to drawing to explaining to winning",
+    tags:["interview","design"],
+    concepts:[
+      "Review and consolidate: identify the two components from Weeks 1–7 you're least confident drawing — spend two sessions on those specific components",
+      "The system design interview meta-game: time management (5 min requirements, 5 min scale, 15 min design, 5 min trade-offs), how to handle clarifying questions, and how to recover when you're stuck",
+      "How to draw diagrams under pressure: the minimum viable diagram that shows architectural thinking, how to annotate without over-explaining, and when to go deeper vs move on",
+      "The trade-off script: a reusable formula for articulating trade-offs that shows Staff/Principal PM level thinking without memorized answers"
+    ],
+    patterns:[
+      "Complete all five system design interview answers from scratch — whiteboard conditions, timed, recorded",
+      "The architecture review: for each of your 8 weekly diagrams, can you draw it from memory? Time yourself. If any takes more than 3 minutes, go back to that week.",
+      "The trade-off inventory: compile your 20 most important AI system design trade-offs — one-line each — and memorize them. These are your interview vocabulary."
+    ],
+    tradeoffs:[
+      "Practice articulating every trade-off from Weeks 1–7 in two sentences: the choice, and what you gain vs what you give up",
+      "The PM trade-off framing: 'I'd choose X over Y because at our scale / for our users / given our constraints, the benefit of [X advantage] outweighs the cost of [X disadvantage]'",
+      "Connecting trade-offs to product outcomes: every system design trade-off has a user-facing manifestation — latency → user experience, cost → pricing, reliability → trust"
+    ],
+    interview:[
+      "SD08 — Design the complete GenAI control plane you built at H&M (your capstone answer)",
+      "This is your home territory. You should be able to answer this better than any other candidate in any room.",
+      "Structure: requirements (governance, cost control, developer experience, responsible AI) → scale estimation (30+ use cases, N teams, X queries/day) → architecture (all components) → key decisions → outcomes → what you'd change",
+      "Time yourself: a complete answer should take 20-25 minutes. Practice until you can deliver it fluently without notes."
+    ],
+    resources:[
+      {title:"Your own notes from Weeks 1–7", detail:"The system design knowledge you've built — synthesize it this week"},
+      {title:"System Design Interview — Alex Xu Vol.2", detail:"Advanced system design patterns — good for Week 8 deepening"},
+      {title:"Exponent — System Design interview practice", detail:"Practice platform with AI PM system design questions"},
+      {title:"ByteByteGo — System Design YouTube", detail:"Visual walkthroughs — use for components you're still shaky on"},
+      {title:"Your H&M control plane documentation", detail:"Your primary interview material — know it cold"}
+    ],
+    exercise:{
+      title:"The 5 System Design Interviews",
+      desc:"Complete all 5 system design interview answers this week — one per day Mon-Fri. SD01 (AI chat), SD02 (enterprise RAG), SD03 (model serving), SD05 (AI platform), SD08 (your control plane). Each one: 30 minutes, whiteboard conditions, record yourself, watch back. By Friday you should be fluent on at least 4 of the 5."
+    },
+    project:{
+      title:"AI System Design Portfolio — Complete",
+      desc:"Assemble your complete AI System Design Portfolio: (1) 8 architecture diagrams drawn from memory with annotations. (2) H&M control plane system design document — complete architecture, key decisions, outcomes, what you'd change. (3) 5 system design interview answers — structured, timed, whiteboard-ready. (4) Personal system design framework — your approach to any AI system design problem. (5) Trade-off cheat sheet — 20 trade-offs, memorized."
+    },
+    assessment:{
+      title:"The Complete System Design Interview",
+      desc:"Record a full 45-minute system design interview — ask yourself SD08 (the control plane question). Go through the complete format: requirements (5 min), scale estimation (5 min), high-level design (15 min), deep dive on two components (10 min), trade-offs (5 min), failure modes (5 min). Watch it back. Every diagram must be clear, every trade-off must be named, every decision must be justified."
+    },
+    hm:"Write the final version of your H&M GenAI control plane system design document. Four sections: (1) The system: what it was, what it did, who it served. (2) The architecture: the complete diagram and explanation of every component. (3) The decisions: the five most important architectural decisions you made and why. (4) What you'd change: with everything you've learned in this course, what would you redesign and why? This is your most powerful interview asset — it demonstrates both experience and learning."
+  }
+];
+
+const colorMap = {'arch':'tag-arch','infra':'tag-infra','design':'tag-design','interview':'tag-interview'};
+const tagLabel = {'arch':'Architecture','infra':'Infrastructure','design':'System Design','interview':'Interview Prep'};
+let opened = new Set();
+
+function buildWeeks() {
+  const container = document.getElementById('weeks');
+  weeks.forEach((w,i) => {
+    const sec = document.createElement('div');
+    sec.className = 'week-section';
+    sec.id = `week-${i}`;
+    sec.innerHTML = `
+      <div class="week-header" onclick="toggleWeek(${i})">
+        <div class="week-num">${w.num}</div>
+        <div class="week-main">
+          <div class="week-title">${w.title}</div>
+          <div class="week-theme">${w.theme}</div>
+          <div class="week-tags">${w.tags.map(t=>`<span class="tag ${colorMap[t]}">${tagLabel[t]}</span>`).join('')}</div>
+        </div>
+        <div class="week-expand">↓</div>
+      </div>
+      <div class="week-body">
+        <div class="wb-section">
+          <div class="wb-label wb-label-concepts">🔬 Core Concepts this week</div>
+          <ul class="wb-items">${w.concepts.map(c=>`<li class="wb-item">${c}</li>`).join('')}</ul>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-patterns">⚙️ Architecture Patterns</div>
+          <ul class="wb-items">${w.patterns.map(p=>`<li class="wb-item">${p}</li>`).join('')}</ul>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-tradeoffs">♟ Trade-offs to master</div>
+          <ul class="wb-items">${w.tradeoffs.map(t=>`<li class="wb-item">${t}</li>`).join('')}</ul>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-interview">🎯 System Design Interview Question</div>
+          <ul class="wb-items">${w.interview.map(t=>`<li class="wb-item">${t}</li>`).join('')}</ul>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-resources">📚 Resources this week</div>
+          <ul class="resource-list">${w.resources.map(r=>`<li class="resource-item"><strong>${r.title}</strong> — <em>${r.detail}</em></li>`).join('')}</ul>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-exercise">✏️ Weekly Exercise</div>
+          <div class="exercise-card"><div class="ex-title">${w.exercise.title}</div><div class="ex-desc">${w.exercise.desc}</div></div>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-project">🛠 Weekly Project</div>
+          <div class="project-card"><div class="pr-title">${w.project.title}</div><div class="pr-desc">${w.project.desc}</div></div>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-assessment">🎤 Weekly Assessment</div>
+          <div class="assessment-card"><div class="as-title">${w.assessment.title}</div><div class="as-desc">${w.assessment.desc}</div></div>
+        </div>
+        <div class="wb-section">
+          <div class="wb-label wb-label-hm">⚡ H&M Control Plane Connection</div>
+          <div class="hm-card"><div class="hm-label-inner">Apply this week to your real experience</div><div class="hm-text">${w.hm}</div></div>
+        </div>
+      </div>`;
+    container.appendChild(sec);
+  });
+}
+
+function toggleWeek(i) {
+  const sec = document.getElementById(`week-${i}`);
+  sec.classList.toggle('open');
+  if (sec.classList.contains('open')) opened.add(i); else opened.delete(i);
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = (opened.size/weeks.length*100).toFixed(0);
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-label').textContent = `${opened.size} of ${weeks.length} weeks opened`;
+}
+
+buildWeeks();
+</script>
+</body>
+</html>
