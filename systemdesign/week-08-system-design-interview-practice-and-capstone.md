@@ -11,7 +11,7 @@
 - [ ] Weekly exercise completed
 - [ ] Weekly project completed or meaningfully advanced
 - [ ] System design interview question practiced (timed, recorded)
-- [ ] H&M control plane connection written
+- [ ] Control plane connection written
 - [ ] Architecture diagram drawn from memory
 - [ ] Weekly reflection completed
 
@@ -225,7 +225,7 @@ For each: the choice + what you gain vs what you give up in 2 sentences.
 
 ---
 
-## 🎯 System Design Interview — SD08: Design the complete GenAI control plane you built at H&M
+## 🎯 System Design Interview — SD08: Design the complete GenAI control plane you built
 
 **Date practiced:**  
 **Time taken:**  
@@ -268,7 +268,7 @@ For each: the choice + what you gain vs what you give up in 2 sentences.
 
 ---
 
-## ⚡ H&M Control Plane Connection
+## ⚡ Control Plane Connection
 
 *(See course document for this week's specific prompt)*
 
